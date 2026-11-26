@@ -34,21 +34,32 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
-      - name: Cache Rust build
-        uses: actions/cache@v4
+      - name: Restore Rust build cache
+        id: cargocache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             native/arfilter/target
-          key: cargo-win-${{ hashFiles('native/arfilter/Cargo.toml', 'native/arfilter/src/**') }}
+          key: cargo-win-${{ hashFiles('native/arfilter/Cargo.toml', 'native/arfilter/Cargo.lock', 'native/arfilter/src/**') }}
 
       - name: Build arfilter (DeepFilterNet3 + filters, Rust)
         run: |
           rustc --version
-          cargo build --release --manifest-path native/arfilter/Cargo.toml
+          cargo build --release --locked --manifest-path native/arfilter/Cargo.toml
           if ($LASTEXITCODE -ne 0) { exit 1 }
           native/arfilter/target/release/arfilter.exe --info
+
+      - name: Save Rust build cache
+        if: steps.cargocache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/arfilter/target
+          key: cargo-win-${{ hashFiles('native/arfilter/Cargo.toml', 'native/arfilter/Cargo.lock', 'native/arfilter/src/**') }}
 
       - name: Install Python dependencies
         run: |
