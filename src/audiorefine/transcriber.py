@@ -12,8 +12,9 @@ Strategy (see AUDIO_PROCESSING.md, "Transcription"):
    The exported 10-minute audio segmentation plays no role here, so sentences that cross a
    10-minute boundary are decoded in one piece.
 4. Each clip is level-normalised before recognition (quiet speech is presented to Whisper at a
-   normal level). The listening path is not used for recognition: Whisper is more accurate on
-   the unprocessed signal than on noise-reduced audio (TEST_REPORT.md).
+   normal level). The listening path is not used for recognition: pooled over 12 test conditions
+   Whisper made fewer errors on the unprocessed signal (10.3 % WER) than on the noise-reduced
+   listening audio (14.7 %), and far fewer in babble noise (TEST_REPORT.md).
 """
 from __future__ import annotations
 

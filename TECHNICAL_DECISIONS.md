@@ -88,7 +88,7 @@ Selection criteria and how they were weighed:
 | GPU | CUDA via CTranslate2 when an NVIDIA RTX 30/40/50 GPU is present. |
 | Deployment | Pure wheels; the model is a 3.1 GB download on first use, verified by SHA-256. |
 
-**large-v3-turbo** (4 decoder layers, ~2.3× faster on CPU here) was evaluated as the default and
+**large-v3-turbo** (4 decoder layers, 1.5–2.3× faster on CPU in our runs) was evaluated as the default and
 as a CPU-only fallback. It was *not* chosen because accuracy is the priority and it was
 measurably worse on Danish (TEST_REPORT.md). Keeping one model also keeps behaviour identical
 on every PC.

@@ -14,7 +14,7 @@ Test environments:
 | Area | Status | Evidence |
 |---|---|---|
 | Automated test suite (112 tests) on Linux | Verified | §2 |
-| Same suite on Windows (GitHub Actions) | Verified – 108/108 passed in run #4, re-run on every push | §2 |
+| Same suite on Windows (GitHub Actions) | Verified – 112/112 passed in run #6, re-run on every push | §2 |
 | Portable Windows build (PyInstaller) builds; packaged self-test | Verified | §3 |
 | Packaged desktop window starts on Windows and lists a folder | Verified (automated screenshot, native Windows platform) | §3 |
 | Packaged first-run download of the 3.1 GB model, SHA-256 verified | Verified on Windows | §3 |
@@ -48,8 +48,7 @@ Test environments:
 Results:
 
 * Linux: 112 passed (the slow 21-minute test is run separately).
-* Windows (GitHub Actions run #4): 108 passed, 0 failed, 0 skipped (the VAD regression test was
-  added afterwards and runs from run #5 on).
+* Windows (GitHub Actions run #6): 112 passed, 0 failed, 0 skipped.
 
 ## 3. Windows build and packaged end-to-end verification (GitHub Actions)
 
@@ -71,21 +70,24 @@ Each push runs `.github/workflows/build-windows.yml` on `windows-latest`:
 7. Automatic verification (`tools/ci/verify_e2e.py`) and upload of the ZIP and of the
    verification material (screenshot, logs, outputs).
 
-Results of run #4 (all checks passed):
+Results of the latest verified run (#6, commit `c88f917`; all checks passed):
 
 | Check | Result |
 |---|---|
+| Test suite on Windows | 112 passed, 0 failed, 0 skipped |
+| Packaged window starts (native Windows platform) and lists the folder | pass (screenshot in the verification artifact) |
 | One batch folder, no leftover staging folder, batch state `complete` | pass |
 | Order `Recording 1.m4a`, `Recording 2.mp3`, `Recording 10.flac` (natural) | pass |
 | Originals archived with identical SHA-256; damaged and unrelated files untouched | pass |
 | `Audio_001.flac` exactly 28 800 000 samples (10:00.000); total samples = decoded samples (35 449 152) | pass |
 | `Audio_002.txt` on the continuous timeline; `Audio_002.srt` relative to its file | pass |
 | WER Danish (AAC) | **7.4 %** |
-| WER English (MP3) | **16.0 %** (of which most is the very quiet utterance, see below) |
+| WER English (stereo MP3, incl. one utterance at ≈ −65 dBFS) | **2.1 %** |
 | WER Danish across the 10:00 boundary | **9.8 %** – the sentence crossing 10:00 is complete and split as "… metafor for eksotiske fjerne egne." in `Audio_002.txt` |
-| Processing time (12:19 of audio, 2:13 of speech, 4 vCPU) | 4 min 30 s: transcription 227 s (1.7× speech duration), enhancement 29 s |
+| 10 minutes of room noise without speech | no text produced (no hallucination) |
+| Processing time (12:19 of audio, 2:15 of speech, 4 vCPU) | 2 min 54 s: transcription 142 s (1.06× speech duration), enhancement 21 s, everything else < 10 s |
 
-Defects found and fixed through this run (see git history):
+Defects found and fixed through runs #1–#5 (see git history):
 
 * Run #1: an English sentence at the start of the second recording was silently dropped
   because the 30-second window also contained the end of the Danish recording and was decoded
@@ -160,7 +162,7 @@ the same 4-CPU machine.
 
 | | Figure |
 |---|---|
-| Whisper large-v3 int8 CPU, 4 vCPU | 0.8–2.1 × the speech duration (VM vs. GitHub runner) |
+| Whisper large-v3 int8 CPU, 4 vCPU | 0.8–1.7 × the speech duration (1.06× in CI run #6) |
 | Whisper large-v3-turbo int8 CPU, 4 vCPU | ≈ 0.4–0.6 × the speech duration |
 | Model RAM (large-v3 int8) | ≈ 3.3 GB resident |
 | DeepFilterNet3 (arfilter), per core | real-time factor 0.16 (1 h of audio ≈ 10 CPU-minutes, parallel over cores) |

@@ -51,8 +51,8 @@ succeeds; otherwise the CPU is used automatically. GPU acceleration has not yet 
 real hardware (see TEST_REPORT.md).
 
 Processing time is dominated by speech recognition, which only runs on the parts that contain
-speech. Measured on CPU: about 2× the speech duration on a 4-core cloud machine; expect roughly
-1× on a modern 8-core desktop CPU (1 hour of conversation ≈ 1 hour of processing). A supported
+speech. Measured on CPU: 1.1–1.7× the speech duration on a 4-core cloud machine; expect roughly
+0.5–1× on a modern 8-core desktop CPU (1 hour of conversation ≈ 30–60 minutes of processing). A supported
 NVIDIA GPU is typically 10–20× faster. Speech enhancement adds about 5 % of the audio duration.
 
 ---

@@ -27,10 +27,15 @@ originals ──decode──► 48 kHz mono "master timeline" (float32, back-to-
 ```
 
 The enhanced audio that sounds best is not the audio that transcribes best. We measured this
-explicitly (TEST_REPORT.md §3): Whisper large-v3 was **as accurate or more accurate on the
-unprocessed signal** than on noise-reduced audio in every condition we tested, while
-DeepFilterNet improved the intelligibility estimate (ESTOI) for humans in noisy conditions.
-AudioRefine therefore uses two internal paths. The user sees neither.
+explicitly (TEST_REPORT.md §4.2, Whisper large-v3, 12 conditions, Danish and English): pooled
+word error rate was **10.3 %** for the original signal with level normalisation (the path
+AudioRefine uses), 11.2 % for the original signal, 11.1 % for conservatively filtered audio,
+**14.7 %** for the listening-path audio with bounded DeepFilterNet and 17.6 % with unbounded
+DeepFilterNet. In babble noise, neural noise reduction more than doubled the errors (Danish
+21.7 % → 40.1 %, English 32.2 % → 66.7 %); in the other conditions the differences were within
+±2.4 points (at most 4 words per excerpt) in both directions. Meanwhile DeepFilterNet improved
+the intelligibility estimate (ESTOI) for listeners in noisy conditions. AudioRefine therefore
+uses two internal paths. The user sees neither.
 
 Both paths share one timeline: 16 kHz sample *i* is 48 kHz sample *3i*. All timestamps are
 derived from sample counts, so audio files and transcripts cannot drift apart.
