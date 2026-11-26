@@ -173,6 +173,10 @@ def test_locked_original_completed_on_next_run(tmp_path, model_dir, monkeypatch)
 
     scan = scan_folder(root)
     assert scan.sources == [] and scan.pending
+    only_archive = run(root, model_dir)          # no new recordings: just finishes the archiving
+    assert only_archive.status == "success" and "earlier batch" in only_archive.message
+    assert (root / "processed" / out.batch / "Recording002.mp3").exists()
+    assert not (root / "Recording002.mp3").exists()
     write_audio(root / "Later.wav", tone(3.0, 16000), 16000)
     out2 = run(root, model_dir)
     assert out2.status == "success"
@@ -201,3 +205,47 @@ def test_long_recording_over_ten_minutes(tmp_path, model_dir):
     assert sum(frames) == n * 3
     t2 = (bdir / "Audio_002.txt").read_text(encoding="utf-8")
     assert t2.startswith("Recording timeline: 00:10:00 – 00:20:00")
+
+
+def test_unicode_folder_and_file_names(tmp_path, model_dir):
+    root = tmp_path / "Optagelser æøå ÆØÅ"
+    root.mkdir()
+    da, sr = speech("da_dk")
+    write_audio(root / "Møde på kontoret – del 1.m4a", da[: sr * 15], sr)
+    write_audio(root / "Møde på kontoret – del 2.wav", da[sr * 15: sr * 30], sr)
+    out = run(root, model_dir)
+    assert out.status == "success", out.message
+    det = json.loads((Path(out.refined_dir) / DETAILS_NAME).read_text(encoding="utf-8"))
+    assert [s["name"] for s in det["sources"]] == ["Møde på kontoret – del 1.m4a", "Møde på kontoret – del 2.wav"]
+    full = (Path(out.refined_dir) / "Transcript_Complete.txt").read_text(encoding="utf-8")
+    assert "Møde på kontoret – del 2.wav begins at" in full
+    assert (root / "processed" / out.batch / "Møde på kontoret – del 1.m4a").exists()
+
+
+def test_engine_killed_mid_run_then_retry(tmp_path, model_dir):
+    """Simulates a crash / power loss: the engine process is killed while processing."""
+    import subprocess
+    import sys
+    import time
+
+    root = make_folder(tmp_path)
+    before = {p.name: sha(p) for p in root.iterdir() if p.is_file()}
+    env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"),
+               AUDIOREFINE_MODEL_DIR=str(model_dir))
+    proc = subprocess.Popen([sys.executable, "-m", "audiorefine.cli", "--json", "process", str(root)],
+                            stdout=subprocess.PIPE, stdin=subprocess.PIPE, env=env, text=True, encoding="utf-8")
+    t0 = time.time()
+    for line in proc.stdout:
+        if '"stage": "enhance"' in line or time.time() - t0 > 120:
+            break
+    proc.kill()
+    proc.wait()
+    assert {p.name: sha(p) for p in root.iterdir() if p.is_file()} == before   # originals untouched
+    assert not (root / "processed").exists()
+    assert list((root / "refined").glob("2*")) == []                          # nothing that looks finished
+    from audiorefine import cli
+
+    assert cli.main(["--json", "scan", str(root)]) == 0                       # scan tidies up
+    assert [p.name for p in (root / "refined").iterdir()] == []
+    out = run(root, model_dir)                                                 # and a retry succeeds
+    assert out.status == "success", out.message

@@ -53,9 +53,19 @@ def _stdin_cancel_watcher(token) -> None:
 
 
 def cmd_scan(args) -> int:
+    from . import batch
     from .discovery import scan_folder
 
-    res = scan_folder(Path(args.folder))
+    root = Path(args.folder)
+    if root.is_dir():
+        try:  # tidy up after a run that was killed (only AudioRefine's own marked temporary folders)
+            if batch.clear_stale_lock(root):
+                log.info("Removed a stale lock file")
+            for name in batch.cleanup_stale_staging(root):
+                log.info("Removed incomplete output of an interrupted run: %s", name)
+        except OSError as e:
+            log.warning("Cleanup skipped: %s", e)
+    res = scan_folder(root)
     _out({"type": "scan", **res.to_dict()})
     return 0
 

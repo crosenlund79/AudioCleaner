@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .batch import PendingArchive, find_pending_archives, folder_busy
-from .constants import AUDIO_EXTENSIONS
+from .constants import AUDIO_EXTENSIONS, PROCESSED_DIR, REFINED_DIR
 from .ordering import determine_order
 from .probe import SourceInfo, probe
 
@@ -80,6 +80,10 @@ def scan_folder(root: Path, check_decode: bool = True) -> ScanResult:
         res.warnings.append("The folder does not exist.")
         return res
     res.busy = folder_busy(root)
+    names = {root.name.lower(), root.parent.name.lower()}
+    if names & {REFINED_DIR, PROCESSED_DIR}:
+        res.warnings.append("This looks like one of AudioRefine's own output folders. Choose the folder that "
+                            "contains your new recordings instead.")
     res.pending = find_pending_archives(root)
     pending_names = {n for p in res.pending for n in p.names}
     files, res.other_files = candidate_files(root)

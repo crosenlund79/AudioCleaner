@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------ actions
     def on_process(self):
-        if not self.folder or not self.scan or not self.scan.get("sources"):
+        if not self.folder or not self.scan or not (self.scan.get("sources") or self.scan.get("pending")):
             return
         st = self.status or {}
         if st and not st.get("model_installed", False):
@@ -496,7 +496,8 @@ class MainWindow(QMainWindow):
         self.bar.setVisible(working)
         self.stage_label.setVisible(working)
         self.time_label.setVisible(working)
-        can = bool(self.scan and self.scan.get("sources")) and not self.busy() and not (self.scan or {}).get("busy")
+        sc = self.scan or {}
+        can = bool(sc.get("sources") or sc.get("pending")) and not self.busy() and not sc.get("busy")
         self.process_btn.setEnabled(can)
         self.open_btn.setEnabled(bool(self.folder and (self.folder / REFINED).is_dir()))
 

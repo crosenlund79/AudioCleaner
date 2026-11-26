@@ -162,12 +162,9 @@ def _piece_text(p: Piece) -> str:
     return t
 
 
-def _source_markers(sources: list[SourceSpan], start: float, end: float, include_first: bool) -> list[tuple[float, str]]:
-    marks = []
-    for i, s in enumerate(sources):
-        if start <= s.start < end and (include_first or s.start > start or i == 0):
-            marks.append((s.start, f"── {s.name} begins at {fmt_ts(s.start)} ──"))
-    return marks
+def _source_markers(sources: list[SourceSpan], start: float, end: float) -> list[tuple[float, str]]:
+    """'── X begins at … ──' lines for recordings starting inside [start, end)."""
+    return [(s.start, f"── {s.name} begins at {fmt_ts(s.start)} ──") for s in sources if start <= s.start < end]
 
 
 def render_segment_txt(sf: SegmentFile, pieces: list[Piece], sources: list[SourceSpan]) -> str:
@@ -179,7 +176,7 @@ def render_segment_txt(sf: SegmentFile, pieces: list[Piece], sources: list[Sourc
         buf.write("Source recordings: " + ", ".join(overlapping) + "\n")
     buf.write("\n")
     events: list[tuple[float, int, str]] = []
-    for t, line in _source_markers(sources, sf.start, sf.end, include_first=True):
+    for t, line in _source_markers(sources, sf.start, sf.end):
         events.append((t, 0, line))
     for p in pieces:
         head = f"[{fmt_ts(p.start)} – {fmt_ts(p.end)}]"

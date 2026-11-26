@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import shutil
+import socket
 import sys
 import time
 import traceback
@@ -105,9 +106,11 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         for name in removed:
             log.info("Removed incomplete output from an earlier interrupted run: %s", name)
         # finish archiving of earlier batches first
+        finished_earlier = 0
         for pend in batch.find_pending_archives(root):
             log.info("Completing archiving of earlier batch %s (%d file(s))", pend.batch, len(pend.names))
             r = batch.archive_sources(root, pend.batch, pend.details_path)
+            finished_earlier += len([n for n in r.moved if n in pend.names])
             if r.failed:
                 warnings.append(f"Earlier batch {pend.batch}: {len(r.failed)} original(s) still could not be moved.")
         scan: ScanResult = scan_folder(root)
@@ -118,6 +121,9 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
                             + ", ".join(u.name for u in scan.unreadable[:5]) + ("..." if len(scan.unreadable) > 5 else ""))
         sources = scan.sources
         if not sources:
+            if finished_earlier:
+                return Outcome("success", f"Moved {finished_earlier} original recording(s) of an earlier batch to "
+                                          f"'{PROCESSED_DIR}'. There were no new recordings to process.", warnings=warnings)
             return Outcome("failed", "No readable audio recordings were found directly in the folder.", warnings=warnings)
         log.info("Order basis: %s", scan.order_basis)
         for i, s in enumerate(sources, 1):
@@ -132,6 +138,8 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         need_work = int(dur * 300_000) + (200 << 20)
         need_out = int(dur * 100_000) + (100 << 20)
         wr = work_root()
+        for name in batch.cleanup_stale_work(wr):
+            log.info("Removed temporary files of an interrupted run: %s", name)
         if _disk_free(wr) < need_work:
             return Outcome("failed", f"Not enough free disk space for temporary files on {wr.anchor or wr} "
                                      f"(about {need_work / 2**30:.1f} GB needed). Nothing was changed.", warnings=warnings)
@@ -144,6 +152,8 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         final_dir = root / REFINED_DIR / batch_name
         work = wr / f"{batch_name}_{uuid.uuid4().hex[:8]}"
         work.mkdir(parents=True)
+        batch.write_json_atomic(work / "owner.json", {"pid": os.getpid(), "host": socket.gethostname(),
+                                                      "folder": str(root)})
         log.info("Batch %s; staging %s; work %s", batch_name, staging, work)
         details_path = staging / DETAILS_NAME
         details = {
@@ -222,6 +232,8 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         regions = vad.speech_regions(probs, raw_length(asr_raw))
         speech_s = sum(b - a for a, b in regions) / ASR_SR
         log.info("Voice activity: %d speech regions, %.1f s of %.1f s", len(regions), speech_s, total_samples / MASTER_SR)
+        prog.set_weights(estimate_weights(prog, total_samples / MASTER_SR, speech_s, lm.device == "cuda",
+                                          hardware.cpu_threads(), opts.workers or (os.cpu_count() or 2)))
 
         # ---------------------------------------------------------------- analysis + enhancement
         prog.start("analyse")
@@ -326,6 +338,7 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         log.info("Archive: %d moved, %d failed", len(ar.moved), len(ar.failed))
         prog.update(1.0)
         total_time = time.time() - t_start
+        log.info("Stage timings (s): %s", prog.finish())
         log.info("Finished in %s", _fmt_dur(total_time))
         if ar.failed:
             return Outcome("archive_incomplete",
@@ -350,7 +363,8 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         if getattr(e, "errno", None) == 28:
             msg = "The disk is full. Free some space and try again. Your recordings were not changed."
         elif isinstance(e, PermissionError):
-            msg = f"AudioRefine could not write a file ({e.filename or e}). Check folder permissions. Your recordings were not changed."
+            msg = (f"A file could not be accessed ({e.filename or e}). It may be open in another program, or "
+                   "access to the folder is denied. Your recordings were not changed.")
         else:
             msg = f"A file operation failed ({e}). Your recordings were not changed."
         return Outcome("failed", msg, warnings=warnings)
@@ -369,6 +383,19 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
                 shutil.copyfile(log_file, final_dir / BATCH_LOG_NAME)
             except OSError:
                 pass
+
+
+def estimate_weights(prog: Progress, total_s: float, speech_s: float, gpu: bool, threads: int, workers: int) -> dict:
+    """Stage weights in expected seconds (measured for finished stages) for a realistic time estimate."""
+    done = prog.finish()
+    asr_rtf = 0.12 if gpu else 8.0 / max(1, threads)       # measured: ~2x speech duration with 4 threads
+    est = {
+        "prepare": done.get("prepare", 1.0), "model": done.get("model", 5.0), "decode": done.get("decode", 1.0),
+        "vad": max(done.get("vad", 0.0), 0.003 * total_s), "analyse": 0.004 * total_s,
+        "enhance": total_s * 0.2 / max(1, workers) + 1.0, "transcribe": speech_s * asr_rtf * 1.1 + 2.0,
+        "write_audio": 0.01 * total_s + 1.0, "write_text": 1.0, "validate": 0.006 * total_s + 1.0, "archive": 2.0,
+    }
+    return {k: max(0.01, v) for k, v in est.items()}
 
 
 def validate_outputs(out_dir: Path, details: dict, seg_files: list, chk) -> list[str]:

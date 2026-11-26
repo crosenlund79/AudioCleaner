@@ -116,7 +116,12 @@ def detect() -> HardwareInfo:
 
 
 def gpu_candidate(hw: HardwareInfo) -> NvidiaGpu | None:
-    """An NVIDIA GPU that could run Whisper large-v3 (>= 4 GB, Turing or newer)."""
+    """An NVIDIA GPU that can run Whisper large-v3: >= 4 GB and compute capability >= 8.6.
+
+    The bundled CTranslate2 4.9 build contains GPU code for sm_86 (RTX 30), sm_89 via sm_86
+    compatibility (RTX 40), sm_100 and sm_120 (RTX 50) only, so older cards are not offered the
+    1.3 GB runtime download. The final decision is made by a test transcription on the GPU.
+    """
     if sys.platform != "win32" and not os.environ.get("AUDIOREFINE_ALLOW_LINUX_GPU"):
         return None
     best = None
@@ -125,7 +130,8 @@ def gpu_candidate(hw: HardwareInfo) -> NvidiaGpu | None:
             cc = float(g.compute_cap)
         except ValueError:
             cc = 0.0
-        if g.memory_mb >= 4000 and cc >= 7.5 and (best is None or g.memory_mb > best.memory_mb):
+        min_cc = float(os.environ.get("AUDIOREFINE_MIN_COMPUTE_CAP", "8.6"))
+        if g.memory_mb >= 4000 and cc >= min_cc and (best is None or g.memory_mb > best.memory_mb):
             best = g
     return best
 

@@ -90,6 +90,7 @@ def main():
     ap.add_argument("--langs", nargs="*", default=["da_dk", "en_us"])
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--no-asr", action="store_true")
+    ap.add_argument("--max-seconds", type=float, default=0, help="only use the first N seconds of each file")
     args = ap.parse_args()
 
     corpus = Path(args.corpus)
@@ -102,12 +103,20 @@ def main():
     outf = open(args.out, "a", encoding="utf-8")
     for lang in args.langs:
         m = man[lang]
-        ref_text = norm_text(" ".join(r["raw"] for r in m["refs"]))
+        refs = m["refs"]
+        if args.max_seconds:
+            refs = [r for r in refs if r["end"] <= args.max_seconds]
+        ref_text = norm_text(" ".join(r["raw"] for r in refs))
         clean48, _ = sf.read(corpus / f"{lang}_reference_clean.wav", dtype="float32")
+        if args.max_seconds:
+            cut = int(max(r["end"] for r in refs) * 48000) + 24000
+            clean48 = clean48[:cut]
         clean16 = to16(clean48)
         conds = args.conds or list(m["files"].keys())
         for cond in conds:
             x48, _ = sf.read(m["files"][cond], dtype="float32")
+            if args.max_seconds:
+                x48 = x48[: len(clean48)]
             with tempfile.TemporaryDirectory() as td:
                 work = Path(td)
                 raw16 = to16(x48)

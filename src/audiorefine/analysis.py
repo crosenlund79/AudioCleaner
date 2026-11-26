@@ -105,35 +105,8 @@ def _psd(raw: Path, frames_mask: np.ndarray | None, nfft: int = 65536, max_block
     return acc / max(len(starts), 1)
 
 
-def detect_hum(psd: np.ndarray | None, nfft: int = 65536) -> tuple[float, int, float]:
-    """Mains hum at 50 or 60 Hz: returns (f0, highest harmonic to notch, prominence dB of f0 region)."""
-    if psd is None:
-        return 0.0, 0, 0.0
-    df = MASTER_SR / nfft
-    best = (0.0, 0, 0.0)
-    for f0 in (50.0, 60.0):
-        prominent = []
-        for h in range(1, 11):
-            f = f0 * h
-            k = int(round(f / df))
-            pk = psd[max(0, k - 2): k + 3].max()
-            lo = psd[max(0, k - int(12 / df)): max(0, k - int(4 / df))]
-            hi = psd[k + int(4 / df): k + int(12 / df)]
-            neigh = np.median(np.concatenate([lo, hi])) if lo.size + hi.size else 0
-            prom = 10 * math.log10((pk + 1e-20) / (neigh + 1e-20))
-            prominent.append(prom)
-        strong = [i + 1 for i, p in enumerate(prominent) if p >= 12.0]
-        if len(strong) >= 2 or (strong and prominent[0] >= 20.0):
-            score = sum(p for p in prominent if p >= 12.0)
-            if score > best[2]:
-                best = (f0, max(strong), score)
-    if best[1]:
-        f0, top, _ = best
-        return f0, top, max(prominent_of(psd, f0, nfft))
-    return 0.0, 0, 0.0
-
-
-def prominent_of(psd, f0, nfft):
+def prominent_of(psd: np.ndarray, f0: float, nfft: int = 65536) -> list[float]:
+    """Prominence (dB) of harmonics 1-10 of ``f0`` over the median of their 4-12 Hz neighbourhood."""
     df = MASTER_SR / nfft
     out = []
     for h in range(1, 11):
@@ -144,6 +117,23 @@ def prominent_of(psd, f0, nfft):
         neigh = np.median(np.concatenate([lo, hi])) if lo.size + hi.size else 0
         out.append(10 * math.log10((pk + 1e-20) / (neigh + 1e-20)))
     return out
+
+
+def detect_hum(psd: np.ndarray | None, nfft: int = 65536) -> tuple[float, int, float]:
+    """Mains hum at 50 or 60 Hz: returns (f0, highest prominent harmonic, max prominence dB)."""
+    if psd is None:
+        return 0.0, 0, 0.0
+    best = (0.0, 0, 0.0)
+    for f0 in (50.0, 60.0):
+        prom = prominent_of(psd, f0, nfft)
+        strong = [i + 1 for i, p in enumerate(prom) if p >= 12.0]
+        if len(strong) >= 2 or (strong and prom[0] >= 20.0):
+            score = sum(p for p in prom if p >= 12.0)
+            if score > best[2]:
+                best = (f0, max(strong), score)
+    if best[1]:
+        return best[0], best[1], float(max(prominent_of(psd, best[0], nfft)))
+    return 0.0, 0, 0.0
 
 
 def _band_power(psd: np.ndarray, f1: float, f2: float, nfft: int = 65536) -> float:

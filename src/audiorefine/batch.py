@@ -153,6 +153,33 @@ class FolderLock:
         self.release()
 
 
+def clear_stale_lock(root: Path) -> bool:
+    """Remove a lock left behind by a process that no longer exists (e.g. a killed engine)."""
+    p = root / REFINED_DIR / LOCK_NAME
+    if p.exists() and not folder_busy(root):
+        p.unlink(missing_ok=True)
+        return True
+    return False
+
+
+def cleanup_stale_work(work_root: Path) -> list[str]:
+    """Delete temporary work folders of engine processes that are no longer running."""
+    removed = []
+    if not work_root.is_dir():
+        return removed
+    for d in work_root.iterdir():
+        if not d.is_dir():
+            continue
+        owner = read_json(d / "owner.json") or {}
+        pid = int(owner.get("pid", 0))
+        same_host = owner.get("host", socket.gethostname()) == socket.gethostname()
+        if same_host and (pid == 0 or not pid_alive(pid)):
+            shutil.rmtree(d, ignore_errors=True)
+            if not d.exists():
+                removed.append(d.name)
+    return removed
+
+
 def folder_busy(root: Path) -> bool:
     p = root / REFINED_DIR / LOCK_NAME
     if not p.exists():

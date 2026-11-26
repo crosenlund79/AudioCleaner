@@ -157,3 +157,24 @@ def test_stale_lock_is_recovered(tmp_path):
     assert not batch.folder_busy(root)
     with batch.FolderLock(root):
         pass
+
+
+def test_stale_work_dirs_removed(tmp_path):
+    wr = tmp_path / "work"
+    (wr / "dead").mkdir(parents=True)
+    batch.write_json_atomic(wr / "dead" / "owner.json", {"pid": 999999999, "host": socket.gethostname()})
+    (wr / "dead" / "master48.f32").write_bytes(b"x" * 100)
+    (wr / "alive").mkdir()
+    batch.write_json_atomic(wr / "alive" / "owner.json", {"pid": os.getpid(), "host": socket.gethostname()})
+    assert batch.cleanup_stale_work(wr) == ["dead"]
+    assert (wr / "alive").exists() and not (wr / "dead").exists()
+
+
+def test_scan_command_cleans_after_killed_run(tmp_path):
+    root = make_root(tmp_path)
+    st = batch.create_staging(root, "killed")
+    (root / "refined" / LOCK_NAME).write_text(json.dumps({"pid": 999999999, "host": socket.gethostname()}))
+    from audiorefine import cli
+
+    assert cli.main(["--json", "scan", str(root)]) == 0
+    assert not st.exists() and not (root / "refined" / LOCK_NAME).exists()

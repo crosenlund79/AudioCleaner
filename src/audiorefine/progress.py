@@ -69,6 +69,17 @@ class Progress:
         self._last = 0.0
         self._lock = threading.Lock()
         self.detail = ""
+        self.timings: dict[str, float] = {}
+        self._stage_t0 = self.t0
+
+    def finish(self) -> dict[str, float]:
+        """Close the current stage (without emitting an event) and return seconds spent per stage."""
+        now = time.monotonic()
+        with self._lock:
+            if self.stage is not None:
+                self.timings[self.stage] = self.timings.get(self.stage, 0.0) + now - self._stage_t0
+                self._stage_t0 = now
+            return {k: round(v, 1) for k, v in self.timings.items()}
 
     def set_weights(self, weights: dict[str, float]):
         with self._lock:
@@ -86,7 +97,11 @@ class Progress:
         return min(1.0, done / tot) if tot else 0.0
 
     def start(self, key: str, detail: str = ""):
+        now = time.monotonic()
         with self._lock:
+            if self.stage is not None:
+                self.timings[self.stage] = self.timings.get(self.stage, 0.0) + now - self._stage_t0
+            self._stage_t0 = now
             self.stage = key
             self.stage_frac = 0.0
             self.detail = detail

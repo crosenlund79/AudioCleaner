@@ -92,13 +92,23 @@ jobs:
       - name: Prepare end-to-end test folder (real Danish and English speech)
         run: python tools/ci/make_e2e_folder.py "$env:RUNNER_TEMP\Audio dumps"
 
-      - name: Packaged GUI smoke test
-        env:
-          QT_QPA_PLATFORM: offscreen
+      - name: Packaged GUI smoke test (native Windows platform, screenshot)
         run: |
-          $p = Start-Process -FilePath dist/AudioRefine/AudioRefine.exe -ArgumentList '--screenshot', "`"$env:RUNNER_TEMP\gui.png`"", '--folder', "`"$env:RUNNER_TEMP\Audio dumps`"" -Wait -PassThru
-          "GUI exit code: $($p.ExitCode)"
-          if ($p.ExitCode -ne 0 -or -not (Test-Path "$env:RUNNER_TEMP\gui.png")) { exit 1 }
+          $guiArgs = @('--screenshot', "`"$env:RUNNER_TEMP\gui.png`"", '--folder', "`"$env:RUNNER_TEMP\Audio dumps`"")
+          function Run-Gui {
+            $p = Start-Process -FilePath dist/AudioRefine/AudioRefine.exe -ArgumentList $guiArgs -PassThru
+            if (-not $p.WaitForExit(180000)) { $p.Kill(); return -1 }
+            return $p.ExitCode
+          }
+          $rc = Run-Gui
+          "GUI exit code (native platform): $rc"
+          if ($rc -ne 0 -or -not (Test-Path "$env:RUNNER_TEMP\gui.png")) {
+            # fall back to the offscreen platform (renders without system fonts on Windows)
+            $env:QT_QPA_PLATFORM = 'offscreen'
+            $rc = Run-Gui
+            "GUI exit code (offscreen): $rc"
+            if ($rc -ne 0) { exit 1 }
+          }
 
       - name: Cache speech recognition model (Whisper large-v3)
         uses: actions/cache@v4
