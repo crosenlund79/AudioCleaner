@@ -14,7 +14,7 @@ from typing import Callable
 import numpy as np
 
 from .constants import ASR_SR
-from .rawaudio import iter_raw, raw_length
+from .rawaudio import iter_raw, raw_length, read_raw
 
 WINDOW = 512                 # samples at 16 kHz (32 ms)
 CONTEXT = 64
@@ -63,23 +63,48 @@ class StreamingSileroVAD:
         return np.concatenate(outs, axis=0).reshape(-1).astype(np.float32)
 
 
-def speech_probabilities(asr_raw: Path, gains: Callable[[int, int], np.ndarray] | None = None,
-                         progress: Callable[[float], None] | None = None,
-                         cancel: Callable[[], None] | None = None) -> np.ndarray:
-    """Silero probability for every 32 ms window of a 16 kHz raw file.
+# Level normalisation of the VAD input (detection only; audio outputs are not affected).
+# Silero misses very quiet speech (measured: an utterance at -65 dBFS was only half detected),
+# so the signal it sees is brought towards -20 dBFS with a slow gain of at most +40 dB.
+VAD_TARGET_DB = -20.0
+VAD_MAX_GAIN_DB = 40.0
+_ENV_FRAME = 480                 # 30 ms
+_ENV_SPAN = 33                   # ~1 s moving maximum of frame levels
 
-    ``gains(start, n)`` may return per-sample linear gains applied before detection (used to
-    level very quiet recordings, because Silero is less sensitive at very low levels).
-    """
+
+def _level_gain(x_ext: np.ndarray, ctx_before: int, n: int) -> np.ndarray:
+    """Per-sample gain for x_ext[ctx_before:ctx_before+n] from a 1-second peak-level envelope."""
+    m = len(x_ext) // _ENV_FRAME
+    if m == 0:
+        return np.ones(n, dtype=np.float32)
+    fr = x_ext[: m * _ENV_FRAME].reshape(m, _ENV_FRAME).astype(np.float64)
+    lv = 10 * np.log10(np.mean(fr * fr, axis=1) + 1e-12)
+    r = _ENV_SPAN // 2
+    pad = np.pad(lv, (r, r), mode="edge")
+    env = np.lib.stride_tricks.sliding_window_view(pad, 2 * r + 1).max(axis=1)
+    g_db = np.clip(VAD_TARGET_DB - env, 0.0, VAD_MAX_GAIN_DB)
+    k = np.ones(9) / 9
+    g_db = np.convolve(np.pad(g_db, 4, mode="edge"), k, mode="valid")
+    centers = (np.arange(m) + 0.5) * _ENV_FRAME
+    idx = np.arange(ctx_before, ctx_before + n, dtype=np.float64)
+    return (10 ** (np.interp(idx, centers, g_db) / 20)).astype(np.float32)
+
+
+def speech_probabilities(asr_raw: Path, progress: Callable[[float], None] | None = None,
+                         cancel: Callable[[], None] | None = None, level_normalise: bool = True) -> np.ndarray:
+    """Silero probability for every 32 ms window of a 16 kHz raw file."""
     vad = StreamingSileroVAD()
     total = raw_length(asr_raw)
     block = WINDOW * 2000  # 64 s
+    ctx = ASR_SR * 2
     probs = []
     for pos, x in iter_raw(asr_raw, block):
         if cancel:
             cancel()
-        if gains is not None:
-            x = x * gains(pos, len(x))
+        if level_normalise:
+            a = max(0, pos - ctx)
+            ext = read_raw(asr_raw, a, (pos + len(x) + ctx) - a)
+            x = x * _level_gain(ext, pos - a, len(x))
         if len(x) % WINDOW:
             x = np.pad(x, (0, WINDOW - len(x) % WINDOW))
         probs.append(vad.windows(np.clip(x, -1.0, 1.0)))

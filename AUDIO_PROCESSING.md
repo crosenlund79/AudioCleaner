@@ -71,9 +71,15 @@ its 120-sample delay compensated, keeping exactly `ceil(N/3)` samples.
   shorter than **90 ms** are discarded; regions are padded by **0.4 s** on both sides (gaps
   shorter than 0.8 s are split in the middle).
 * The threshold is lower than Silero's default 0.5 on purpose: missing quiet speech is worse
-  than decoding a little non-speech, which the hallucination checks handle. In our corpus
-  speech at −58 dBFS was detected as completely as speech at −23 dBFS (Silero normalises
-  internally), so no extra level normalisation is applied before VAD.
+  than decoding a little non-speech, which the hallucination checks handle.
+* **Level-normalised detection input.** Silero is not fully level-invariant: in the Windows
+  end-to-end test an utterance at ≈ −65 dBFS (a speaker far from the microphone) was only half
+  detected, and Whisper therefore never saw its first sentence. The VAD now analyses a copy of
+  the signal with a slow gain: the 1-second peak envelope of 30 ms frame levels is brought
+  towards −20 dBFS, gain 0…+40 dB, smoothed over ~0.3 s. The detection of that utterance rose
+  from 0.0–0.7 to 0.9–1.0, recall elsewhere was unchanged, and only music in pauses was
+  flagged somewhat more often (decoded, then handled by the hallucination checks). Nothing in
+  the audio outputs is affected by this gain.
 * VAD is used for: (1) deciding what Whisper decodes, (2) the leveller's speech level
   estimate, (3) per-recording speech/noise statistics, (4) detecting speech that produced no
   words (coverage repair and `[unclear speech]` markers).

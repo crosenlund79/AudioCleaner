@@ -206,3 +206,20 @@ def test_language_policy():
     assert p.choose({"de": 0.7, "da": 0.1, "en": 0.15}) == "en"                 # not confident enough: supported language
     q = LanguagePolicy()
     assert q.choose({"sv": 0.8, "da": 0.15}) == "da"
+
+
+def test_vad_detects_very_quiet_real_speech(tmp_path):
+    """FLEURS utterance at ~-65 dBFS (25.7-31.7 s in the English fixture) must be detected as speech."""
+    import soundfile as sf
+
+    from audiorefine import vad
+    from conftest import DATA
+
+    x, sr = sf.read(DATA / "fleurs_en_us.flac", dtype="float32")
+    p = write(tmp_path, "en16.f32", x)
+    probs = vad.speech_probabilities(p)
+    w = lambda t: int(t * 16000 / 512)
+    assert float(probs[w(26.0):w(31.0)].mean()) > 0.7
+    regions = vad.speech_regions(probs, len(x))
+    covered = sum(max(0, min(b, int(31.7 * sr)) - max(a, int(25.7 * sr))) for a, b in regions)
+    assert covered > 0.9 * 6.0 * sr
