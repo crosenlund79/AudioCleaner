@@ -26,7 +26,8 @@ from typing import Callable
 import numpy as np
 
 from .constants import ASR_SR
-from .hallucination import collapse_repetition, is_known_artefact, normalise, segment_is_uncertain
+from .hallucination import (MAX_PLAUSIBLE_CPS, chars_per_second, collapse_repetition, find_immediate_repeat,
+                            is_known_artefact, normalise, segment_is_uncertain)
 from .language import LanguagePolicy, LanguagePolicyModel
 from .rawaudio import raw_length, read_raw
 from .transcript import TSegment, TWord
@@ -380,6 +381,18 @@ class Transcriber:
                     seg.uncertain = True
                     seg.note = "repetition removed"
                     self.stats["repetitions_collapsed"] += 1
+            if seg.words and len(seg.words) >= 10:
+                rep2 = find_immediate_repeat([w.text for w in seg.words])
+                if rep2:
+                    a, b = rep2
+                    seg.uncertain = True
+                    if chars_per_second(seg.text, seg.start, seg.end) > MAX_PLAUSIBLE_CPS:
+                        # too much text for the time it took: the second copy was not spoken
+                        seg.words = seg.words[:a] + seg.words[b:]
+                        seg.text = "".join(w.text for w in seg.words).strip()
+                        seg.end = seg.words[-1].end if seg.words else seg.end
+                        seg.note = "duplicated phrase removed"
+                        self.stats["repetitions_collapsed"] += 1
             if seg.text:
                 cleaned.append(seg)
         return cleaned

@@ -63,7 +63,7 @@ def main():
     import jiwer
 
     for sp in expect["spans"]:
-        hyp = " ".join(t for s, e, t in segs if s >= sp["start"] - 1 and s < sp["end"] + 1)
+        hyp = " ".join(t for s, e, t in segs if sp["start"] - 0.5 <= (s + e) / 2 < sp["end"] + 0.5)
         w = jiwer.wer(norm(sp["ref"]), norm(hyp)) if hyp else 1.0
         label = f"{sp['lang']} {sp['start']:.1f}-{sp['end']:.1f}s" + (" (crosses 10:00)" if sp.get("crosses") else "")
         print(f"   WER {label}: {w * 100:.1f}%")

@@ -119,8 +119,8 @@ def main():
         print(wer_table(m_t, ["raw", "raw_norm", "conserv", "df_plan", "df_full"], "large-v3-turbo"))
     m_l = load(d / "matrix_large.jsonl")
     if m_l:
-        print("### Audio variants → recognition, Whisper large-v3 (first 150 s of each file)\n")
-        print(wer_table(m_l, ["raw", "raw_norm", "conserv", "df_plan"], "large-v3"))
+        print("### Audio variants → recognition, Whisper large-v3 (first 90 s of each file)\n")
+        print(wer_table(m_l, ["raw", "raw_norm", "conserv", "df_plan", "df_full"], "large-v3"))
     e = load(d / "estoi_all.jsonl")
     if e:
         print("### Listening path – intelligibility estimate (full 4-minute files)\n")

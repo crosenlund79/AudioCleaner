@@ -269,7 +269,11 @@ Whisper can invent text, especially on silence, noise and music. Measures, in or
    and flagged.
 4. **Repetition loops** – a phrase of 2–8 words repeated more than 3 times in a row (single
    words: 8+ times) is cut back to 3 occurrences (4 for single words) and flagged; a segment
-   identical to the two previous ones (≥ 4 words) is dropped.
+   identical to the two previous ones (≥ 4 words) is dropped. A phrase of ≥ 5 words immediately
+   followed by an identical copy is flagged `[uncertain]`; the copy is removed only if the
+   segment also contains implausibly much text for its duration (> 21 characters per second;
+   normal speech is 12–18). This catches Whisper emitting a sentence twice (observed once on the
+   Windows CI machine, 28 characters/s) without deleting genuine repetitions.
 5. **Coverage repair** – confident speech (smoothed VAD ≥ 0.35 for ≥ 1 s, mean ≥ 0.4) that
    received no words is decoded again on its own, with fresh language detection and no prompt;
    words are only accepted inside the gap and not overlapping existing words. This recovers

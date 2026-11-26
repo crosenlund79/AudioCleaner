@@ -178,6 +178,18 @@ def test_repetition_collapse():
     assert collapse_repetition([" ja", " ja", " ja"]) is None  # normal speech
 
 
+def test_immediate_repeat_detection():
+    from audiorefine.hallucination import chars_per_second, find_immediate_repeat
+
+    sent = " Artiklerne krævede en enestemmelighed og accept fra alle stater, før de kunne ændres.".split(" ")[1:]
+    words = [" " + w for w in sent] * 2 + [" Staterne", " tog"]
+    a, b = find_immediate_repeat(words)
+    assert (a, b) == (len(sent), 2 * len(sent))
+    assert find_immediate_repeat([" jeg", " sagde", " nej", " jeg", " sagde", " nej"]) is None  # short phrases are normal
+    text = "".join(words)
+    assert chars_per_second(text, 0, 6.1) > 21 and chars_per_second(text[: len(text) // 2], 0, 6.1) < 21
+
+
 def test_uncertainty_flags():
     assert segment_is_uncertain(-1.2, [0.9], 0.0, 1.5)
     assert segment_is_uncertain(-0.2, [0.2, 0.3, 0.9], 0.0, 1.5)

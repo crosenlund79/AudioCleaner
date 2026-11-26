@@ -67,6 +67,29 @@ def collapse_repetition(words: list[str], max_repeats: int = 3) -> tuple[int, in
     return None
 
 
+def find_immediate_repeat(words: list[str], min_len: int = 5) -> tuple[int, int] | None:
+    """A phrase of >= ``min_len`` words immediately followed by an identical copy.
+
+    Returns (start, end) of the second copy, or None. Whisper sometimes emits a sentence twice;
+    people rarely repeat five or more words verbatim without a pause.
+    """
+    norm = [normalise(w) for w in words]
+    n = len(norm)
+    for size in range(n // 2, min_len - 1, -1):
+        for i in range(0, n - 2 * size + 1):
+            if norm[i:i + size] == norm[i + size:i + 2 * size] and all(norm[i:i + size]):
+                return i + size, i + 2 * size
+    return None
+
+
+def chars_per_second(text: str, start: float, end: float) -> float:
+    return len(text.strip()) / max(end - start, 0.5)
+
+
+# Spoken Danish and English rarely exceed ~18 characters (incl. spaces) per second.
+MAX_PLAUSIBLE_CPS = 21.0
+
+
 def segment_is_uncertain(avg_logprob: float, word_probs: list[float], temperature: float,
                          compression_ratio: float) -> bool:
     if avg_logprob < -0.9:
