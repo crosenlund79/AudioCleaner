@@ -133,9 +133,12 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         for w in scan.warnings:
             log.warning(w)
 
-        # space check (work files ~300 kB/s of audio, outputs <= 100 kB/s)
+        # space check. Work files (measured): decoded 48 kHz float sources 192 kB/s + 16 kHz copy 64 kB/s,
+        # plus the filtered copy of the longest recording and parallel chunks (~230 kB/s of it).
+        # Outputs: FLAC 16-bit mono <= 96 kB/s.
         dur = scan.total_duration
-        need_work = int(dur * 300_000) + (200 << 20)
+        longest = max((s.duration for s in sources), default=0.0)
+        need_work = int(dur * 256_000 + longest * 230_000) + (300 << 20)
         need_out = int(dur * 100_000) + (100 << 20)
         wr = work_root()
         for name in batch.cleanup_stale_work(wr):

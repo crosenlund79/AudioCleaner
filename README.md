@@ -42,7 +42,7 @@ not code-signed. Choose *More info → Run anyway*.
 |---|---|---|
 | Windows | 10 or 11, 64-bit | |
 | Memory | 8 GB RAM | 16 GB RAM |
-| Disk | 4 GB for the program and model, plus ~1 GB of temporary space per hour of audio | SSD |
+| Disk | 4 GB for the program and model, plus temporary space of about 1.3 GB per hour of audio (2.5 GB per hour for a single very long recording), and ~0.2 GB per hour for the results | SSD |
 | Processor | any 64-bit CPU with AVX2 (2013 or newer) | 8+ cores |
 | Graphics (optional) | | NVIDIA GeForce RTX 30/40/50 series with ≥ 4 GB (used automatically; see note) |
 
