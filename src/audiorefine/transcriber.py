@@ -72,9 +72,33 @@ def _split_long_region(asr_raw: Path | None, a: int, b: int, audio: np.ndarray |
     return out
 
 
-def plan_clips(regions: list[tuple[int, int]], asr_raw: Path | None = None, audio: np.ndarray | None = None) -> list[tuple[int, int]]:
-    pieces: list[tuple[int, int]] = []
+def _split_at(regions: list[tuple[int, int]], breaks: list[int]) -> list[tuple[int, int]]:
+    """Split regions at the given positions (junctions between recordings)."""
+    if not breaks:
+        return regions
+    out = []
     for a, b in regions:
+        cur = a
+        for k in breaks:
+            if cur < k < b:
+                if k - cur > ASR_SR // 10:
+                    out.append((cur, k))
+                cur = k
+        if b - cur > ASR_SR // 10 or cur == a:
+            out.append((cur, b))
+    return out
+
+
+def plan_clips(regions: list[tuple[int, int]], asr_raw: Path | None = None, audio: np.ndarray | None = None,
+               breaks: list[int] | None = None) -> list[tuple[int, int]]:
+    """Merge VAD regions into recognition clips (<= 30 s, gaps <= 4 s), never across ``breaks``.
+
+    Clips never span the junction between two recordings: a new recording often means a new
+    situation, speaker or language, and a 30-second Whisper window decodes in one language.
+    """
+    breaks = sorted(breaks or [])
+    pieces: list[tuple[int, int]] = []
+    for a, b in _split_at(regions, breaks):
         if b - a > REGION_MAX_S * ASR_SR:
             pieces.extend(_split_long_region(asr_raw, a, b, audio))
         else:
@@ -83,7 +107,9 @@ def plan_clips(regions: list[tuple[int, int]], asr_raw: Path | None = None, audi
     for a, b in pieces:
         if clips:
             ca, cb = clips[-1]
-            if b - ca <= CLIP_MAX_S * ASR_SR and a - cb <= CLIP_MAX_GAP_S * ASR_SR and cb - ca < CLIP_MAX_S * ASR_SR:
+            crosses = any(cb <= k <= a or ca < k < b for k in breaks)
+            if (not crosses and b - ca <= CLIP_MAX_S * ASR_SR and a - cb <= CLIP_MAX_GAP_S * ASR_SR
+                    and cb - ca < CLIP_MAX_S * ASR_SR):
                 clips[-1][1] = b
                 continue
         clips.append([a, b])
@@ -114,6 +140,13 @@ def clip_gain(x: np.ndarray) -> float:
     return 10 ** (g_db / 20)
 
 
+def _smooth_probs(p: np.ndarray, k: int = 9) -> np.ndarray:
+    """Moving average over ~0.3 s: Silero probabilities fluctuate strongly inside real speech."""
+    if p.size < k:
+        return p
+    return np.convolve(np.pad(p, k // 2, mode="edge"), np.ones(k) / k, mode="valid")
+
+
 @dataclass
 class TranscribeOptions:
     beam_size: int = 5
@@ -132,14 +165,18 @@ class Transcriber:
         else:
             object.__setattr__(self.model.model, "_policy", self.policy)
         self.stats = {"segments": 0, "dropped_artefacts": 0, "repetitions_collapsed": 0,
-                      "duplicate_segments_dropped": 0, "uncertain_segments": 0, "unclear_markers": 0}
+                      "duplicate_segments_dropped": 0, "uncertain_segments": 0, "unclear_markers": 0,
+                      "repair_attempts": 0, "repaired_segments": 0, "repair_seconds": 0.0}
 
     # ------------------------------------------------------------------ main entry
     def transcribe(self, asr_raw: Path | None, regions: list[tuple[int, int]], probs: np.ndarray | None = None,
                    audio: np.ndarray | None = None, progress: Callable[[float], None] | None = None,
-                   cancel: Callable[[], None] | None = None) -> list[TSegment]:
-        """Transcribe speech regions of a 16 kHz raw file (or in-memory ``audio``)."""
-        clips = plan_clips(regions, asr_raw, audio)
+                   cancel: Callable[[], None] | None = None, breaks: list[int] | None = None) -> list[TSegment]:
+        """Transcribe speech regions of a 16 kHz raw file (or in-memory ``audio``).
+
+        ``breaks`` are the 16 kHz positions where one recording ends and the next begins.
+        """
+        clips = plan_clips(regions, asr_raw, audio, breaks)
         blocks = plan_blocks(clips)
         total_speech = sum(b - a for a, b in clips) or 1
         done = 0
@@ -195,6 +232,8 @@ class Transcriber:
             if progress:
                 progress(min(1.0, done / total_speech))
             block_segs = self._clean(block_segs, probs)
+            if probs is not None:
+                block_segs = self._repair_coverage(block_segs, blk, seg_audio, probs, cancel)
             out.extend(block_segs)
             tail = " ".join(s.text for s in block_segs if not s.uncertain)[-PROMPT_CHARS:]
             prompt = tail if tail.strip() else None
@@ -225,6 +264,94 @@ class Transcriber:
         return TSegment(start=start, end=end, text=text, words=words, avg_logprob=float(s.avg_logprob),
                         no_speech_prob=float(s.no_speech_prob), compression_ratio=float(s.compression_ratio),
                         temperature=float(s.temperature), language=self.policy.current or "", uncertain=uncertain)
+
+    def _uncovered_runs(self, segs: list[TSegment], a: int, b: int, probs: np.ndarray) -> list[tuple[int, int]]:
+        """Runs (16 kHz samples) of confident speech inside [a, b) that no recognised word covers."""
+        wa, wb = a // 512, max(a // 512 + 1, b // 512)
+        p = probs[wa:wb]
+        if p.size == 0:
+            return []
+        covered = np.zeros(p.size, dtype=bool)
+        tol = 0.3
+        for s in segs:
+            spans = [(w.start, w.end) for w in s.words] or [(s.start, s.end)]
+            for ws, we in spans:
+                i0 = max(0, int((ws - tol) * ASR_SR / 512) - wa)
+                i1 = min(p.size, int(math.ceil((we + tol) * ASR_SR / 512)) - wa)
+                if i1 > i0:
+                    covered[i0:i1] = True
+        speech = (_smooth_probs(p) >= 0.35) & ~covered
+        runs, start = [], None
+        for i in range(p.size + 1):
+            on = i < p.size and speech[i]
+            if on and start is None:
+                start = i
+            elif not on and start is not None:
+                # bridge tiny gaps of < 0.3 s
+                if runs and (start - runs[-1][1]) * 512 < 0.3 * ASR_SR:
+                    runs[-1] = (runs[-1][0], i)
+                else:
+                    runs.append((start, i))
+                start = None
+        out = []
+        for r0, r1 in runs:
+            if (r1 - r0) * 512 >= 1.0 * ASR_SR and float(p[r0:r1].mean()) >= 0.4:
+                out.append(((wa + r0) * 512, (wa + r1) * 512))
+        return out
+
+    def _repair_coverage(self, segs: list[TSegment], blk: Block, blk_audio: np.ndarray, probs: np.ndarray,
+                         cancel: Callable[[], None] | None) -> list[TSegment]:
+        """Re-transcribe confident speech that produced no words (e.g. a language change inside a
+        30-second window, or a decoder that stopped early). Each gap is decoded on its own, with
+        fresh language detection and no prompt. Words are only accepted inside the gap."""
+        budget = max(30.0, 0.25 * sum(b - a for a, b in blk.clips) / ASR_SR)
+        added: list[TSegment] = []
+        for ca, cb in blk.clips:
+            for ra, rb in self._uncovered_runs(segs, ca, cb, probs):
+                if cancel:
+                    cancel()
+                if self.stats["repair_seconds"] >= budget:
+                    return segs + added
+                pad = int(0.3 * ASR_SR)
+                sa, sb = max(ca, ra - pad), min(cb, rb + pad)
+                sub = blk_audio[sa - blk.start: sb - blk.start].astype(np.float32, copy=True)
+                if sub.size < ASR_SR // 2:
+                    continue
+                self.stats["repair_attempts"] += 1
+                self.stats["repair_seconds"] += (sb - sa) / ASR_SR
+                existing = [(w.start, w.end) for sg in segs + added for w in sg.words]
+                saved = self.policy.current
+                self.policy.current = None          # fresh language decision for this piece
+                try:
+                    res, _ = self.model.transcribe(
+                        sub, language=saved or self.policy.default, task="transcribe", beam_size=self.opts.beam_size,
+                        best_of=5, temperature=[0.0, 0.2, 0.4, 0.6], compression_ratio_threshold=2.4,
+                        log_prob_threshold=-1.0, no_speech_threshold=0.6, condition_on_previous_text=False,
+                        initial_prompt=None, word_timestamps=True, multilingual=True, vad_filter=False)
+                    got = []
+                    for s in res:
+                        seg = self._convert(s, sa / ASR_SR)
+                        if seg is None:
+                            continue
+                        seg.words = [w for w in seg.words if ra / ASR_SR - 0.6 <= w.start <= rb / ASR_SR + 0.3
+                                     and not any(w.start < e - 0.05 and w.end > b + 0.05 for b, e in existing)]
+                        if not seg.words or seg.no_speech_prob > 0.6 or seg.avg_logprob < -1.2:
+                            continue
+                        seg.text = "".join(w.text for w in seg.words).strip()
+                        seg.start, seg.end = seg.words[0].start, seg.words[-1].end
+                        got.append(seg)
+                    got = self._clean(got, probs)
+                finally:
+                    lang_used = self.policy.current
+                    self.policy.current = saved
+                for g in got:
+                    g.language = lang_used or g.language
+                self.stats["repaired_segments"] += len(got)
+                added.extend(got)
+        if added:
+            log.info("Coverage repair recovered %d segment(s) in block %.1f-%.1f s", len(added),
+                     blk.start / ASR_SR, blk.end / ASR_SR)
+        return sorted(segs + added, key=lambda s: s.start)
 
     def _speech_support(self, seg: TSegment, probs: np.ndarray | None) -> float:
         if probs is None or probs.size == 0:
@@ -279,12 +406,12 @@ class Transcriber:
         markers = []
         for a, b in regions:
             wa, wb = a // 512, max(a // 512 + 1, b // 512)
-            p = probs[wa:wb]
+            p = _smooth_probs(probs[wa:wb])
             free = ~covered[wa:wb]
             # find runs of uncovered, confidently-speech windows of >= 1.5 s
             run_start = None
             for i in range(len(p) + 1):
-                ok = i < len(p) and free[i] and p[i] >= 0.7
+                ok = i < len(p) and free[i] and p[i] >= 0.5
                 if ok and run_start is None:
                     run_start = i
                 elif not ok and run_start is not None:

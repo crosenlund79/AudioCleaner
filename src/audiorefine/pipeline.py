@@ -262,7 +262,9 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         prog.start("transcribe")
         t0 = time.time()
         tr = Transcriber(lm.model)
-        segs = tr.transcribe(asr_raw, regions, probs=probs, progress=lambda f: prog.update(f), cancel=chk)
+        junctions = [o // DECIMATION for o in offsets[1:]]
+        segs = tr.transcribe(asr_raw, regions, probs=probs, progress=lambda f: prog.update(f), cancel=chk,
+                             breaks=junctions)
         dt = time.time() - t0
         langs = [k for k, _ in sorted(tr.policy.counts.items(), key=lambda kv: -kv[1])]
         details["transcription"].update({"seconds": round(dt, 1), "speech_seconds": round(speech_s, 1),
