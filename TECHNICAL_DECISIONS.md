@@ -195,7 +195,7 @@ used. Rationale in README "How the order is decided" and `ordering.py`.
 ## 10. Packaging and distribution
 
 * PyInstaller 6.22 one-folder build (`packaging/audiorefine.spec`), no UPX (fewer antivirus
-  false positives), Windows version resources and icon. ~250–300 MB unpacked (dominated by
+  false positives), Windows version resources and icon. 156 MB ZIP, 353 MB unpacked (dominated by
   Qt, FFmpeg, CTranslate2, ONNX Runtime).
 * Data in `%LOCALAPPDATA%\AudioRefine` (models survive upgrades); portable mode when a `data`
   folder exists next to the executable.

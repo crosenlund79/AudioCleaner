@@ -76,10 +76,13 @@ its 120-sample delay compensated, keeping exactly `ceil(N/3)` samples.
   end-to-end test an utterance at ≈ −65 dBFS (a speaker far from the microphone) was only half
   detected, and Whisper therefore never saw its first sentence. The VAD now analyses a copy of
   the signal with a slow gain: the 1-second peak envelope of 30 ms frame levels is brought
-  towards −20 dBFS, gain 0…+40 dB, smoothed over ~0.3 s. The detection of that utterance rose
-  from 0.0–0.7 to 0.9–1.0, recall elsewhere was unchanged, and only music in pauses was
-  flagged somewhat more often (decoded, then handled by the hallucination checks). Nothing in
-  the audio outputs is affected by this gain.
+  towards −20 dBFS, gain 0…+40 dB, smoothed over ~0.3 s — **but only where that envelope lies at
+  least 12–18 dB above the local noise floor** (moving minimum over ±5 s). The first version
+  without this contrast condition boosted a 10-minute stretch of plain room noise in the CI test
+  by ~34 dB; Silero then called it speech and Whisper hallucinated "Thank you." 25 times. With
+  the condition, the quiet utterance is detected (0.92 mean probability, was 0.0–0.7), the
+  noise stretch yields no speech regions, and recall/false-alarm rates on the corpus are
+  unchanged. Nothing in the audio outputs is affected by this gain.
 * VAD is used for: (1) deciding what Whisper decodes, (2) the leveller's speech level
   estimate, (3) per-recording speech/noise statistics, (4) detecting speech that produced no
   words (coverage repair and `[unclear speech]` markers).
@@ -269,13 +272,16 @@ Whisper can invent text, especially on silence, noise and music. Measures, in or
    `hallucination_silence_threshold` skips long silent stretches inside a window when the
    output looks like a hallucination.
 3. **Known artefacts** – subtitle credits and outros that Whisper learned from video
-   ("Tak fordi du så med", "Undertekster af …", "Danske tekster", "Thanks for watching",
-   "Subtitles by …", "[Musik]" …) are **dropped only if the acoustic evidence for speech is
-   weak** (no-speech probability > 0.2, log-prob < −0.6 or VAD support < 0.5); otherwise kept
-   and flagged.
+   ("Tak fordi du så med", "Tak fordi du lyttede med", "Danske tekster af … Scandinavian Text
+   Service", "Undertekster af …", "Thanks for watching", "Thank you.", "Subtitles by …",
+   "[Musik]" …; credit lines match as a prefix whatever names follow) are **dropped only if the
+   acoustic evidence for speech is weak** (no-speech probability > 0.2, log-prob < −0.6 or VAD
+   support < 0.5); otherwise kept and flagged. A genuine, clearly spoken "thank you" is kept.
 4. **Repetition loops** – a phrase of 2–8 words repeated more than 3 times in a row (single
    words: 8+ times) is cut back to 3 occurrences (4 for single words) and flagged; a segment
-   identical to the two previous ones (≥ 4 words) is dropped. A phrase of ≥ 5 words immediately
+   identical to the two previous ones (≥ 4 words) is dropped, and a run of ≥ 3 consecutive
+   *low-confidence* segments with identical text keeps only the first (confident repetitions
+   such as "ja … ja … ja" are kept). A phrase of ≥ 5 words immediately
    followed by an identical copy is flagged `[uncertain]`; the copy is removed only if the
    segment also contains implausibly much text for its duration (> 21 characters per second;
    normal speech is 12–18). This catches Whisper emitting a sentence twice (observed once on the

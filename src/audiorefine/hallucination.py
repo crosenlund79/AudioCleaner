@@ -20,6 +20,14 @@ KNOWN_ARTEFACTS = (
     "please subscribe", "like and subscribe", "subtitles by", "subtitled by", "amaraorg",
     "transcribed by", "transcription by", "captions by", "www", "com", "♪", "copyright",
     "nextvideo", "see you in the next video", "bye bye", "music", "musik",
+    "thank you", "thanks", "tak fordi du lyttede med", "tak fordi i lyttede med", "tak for at lytte med",
+)
+
+# Subtitle credits: matched as a prefix or anywhere, whatever follows (names, years, companies).
+CREDIT_MARKERS = (
+    "danske tekster", "dansk tekst", "undertekster", "tekstet af", "tekster af", "oversat af",
+    "scandinavian text service", "text service", "subtitles by", "subtitled by", "captions by",
+    "transcribed by", "amara org", "sdi media", "broadcast text",
 )
 
 _PUNCT = re.compile(r"[^\w\s]", re.UNICODE)
@@ -35,6 +43,9 @@ def is_known_artefact(text: str) -> bool:
     n = normalise(text)
     if not n:
         return True
+    for c in CREDIT_MARKERS:
+        if n.startswith(c) or (" " + c + " ") in (" " + n + " "):
+            return True
     for a in KNOWN_ARTEFACTS:
         if n == a or (len(a) > 8 and a in n and len(n) <= len(a) + 25):
             return True

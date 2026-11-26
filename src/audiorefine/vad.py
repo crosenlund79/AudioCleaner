@@ -65,26 +65,36 @@ class StreamingSileroVAD:
 
 # Level normalisation of the VAD input (detection only; audio outputs are not affected).
 # Silero misses very quiet speech (measured: an utterance at -65 dBFS was only half detected),
-# so the signal it sees is brought towards -20 dBFS with a slow gain of at most +40 dB.
+# so the signal it sees is brought towards -20 dBFS with a slow gain of at most +40 dB -- but
+# only where the signal stands clearly above the local noise floor. Boosting a stretch of plain
+# room noise would make Silero call it speech (observed in CI: Whisper then hallucinated).
 VAD_TARGET_DB = -20.0
 VAD_MAX_GAIN_DB = 40.0
+VAD_MIN_CONTRAST_DB = 12.0       # envelope must exceed the local noise floor by this much
 _ENV_FRAME = 480                 # 30 ms
 _ENV_SPAN = 33                   # ~1 s moving maximum of frame levels
+_FLOOR_SPAN = 333                # ~10 s window for the noise floor (moving minimum)
+
+
+def _moving(fn, x: np.ndarray, r: int) -> np.ndarray:
+    pad = np.pad(x, (r, r), mode="edge")
+    return fn(np.lib.stride_tricks.sliding_window_view(pad, 2 * r + 1), axis=1)
 
 
 def _level_gain(x_ext: np.ndarray, ctx_before: int, n: int) -> np.ndarray:
-    """Per-sample gain for x_ext[ctx_before:ctx_before+n] from a 1-second peak-level envelope."""
+    """Per-sample gain for x_ext[ctx_before:ctx_before+n]."""
     m = len(x_ext) // _ENV_FRAME
     if m == 0:
         return np.ones(n, dtype=np.float32)
     fr = x_ext[: m * _ENV_FRAME].reshape(m, _ENV_FRAME).astype(np.float64)
     lv = 10 * np.log10(np.mean(fr * fr, axis=1) + 1e-12)
-    r = _ENV_SPAN // 2
-    pad = np.pad(lv, (r, r), mode="edge")
-    env = np.lib.stride_tricks.sliding_window_view(pad, 2 * r + 1).max(axis=1)
+    env = _moving(np.max, lv, _ENV_SPAN // 2)
+    smooth = np.convolve(np.pad(lv, 5, mode="edge"), np.ones(11) / 11, mode="valid")
+    floor = _moving(np.min, smooth, _FLOOR_SPAN // 2)
     g_db = np.clip(VAD_TARGET_DB - env, 0.0, VAD_MAX_GAIN_DB)
-    k = np.ones(9) / 9
-    g_db = np.convolve(np.pad(g_db, 4, mode="edge"), k, mode="valid")
+    contrast = env - floor
+    g_db = g_db * np.clip((contrast - VAD_MIN_CONTRAST_DB) / 6.0, 0.0, 1.0)   # fade in between 12 and 18 dB
+    g_db = np.convolve(np.pad(g_db, 4, mode="edge"), np.ones(9) / 9, mode="valid")
     centers = (np.arange(m) + 0.5) * _ENV_FRAME
     idx = np.arange(ctx_before, ctx_before + n, dtype=np.float64)
     return (10 ** (np.interp(idx, centers, g_db) / 20)).astype(np.float32)
@@ -96,7 +106,7 @@ def speech_probabilities(asr_raw: Path, progress: Callable[[float], None] | None
     vad = StreamingSileroVAD()
     total = raw_length(asr_raw)
     block = WINDOW * 2000  # 64 s
-    ctx = ASR_SR * 2
+    ctx = ASR_SR * 6
     probs = []
     for pos, x in iter_raw(asr_raw, block):
         if cancel:

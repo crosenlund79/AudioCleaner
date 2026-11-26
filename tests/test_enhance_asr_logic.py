@@ -223,3 +223,33 @@ def test_vad_detects_very_quiet_real_speech(tmp_path):
     regions = vad.speech_regions(probs, len(x))
     covered = sum(max(0, min(b, int(31.7 * sr)) - max(a, int(25.7 * sr))) for a, b in regions)
     assert covered > 0.9 * 6.0 * sr
+
+
+def test_vad_does_not_boost_plain_noise_into_speech(tmp_path):
+    """Two minutes of room noise (-54 dBFS) must not be detected as speech (CI run #5 regression)."""
+    from audiorefine import vad
+
+    x = (np.random.default_rng(7).standard_normal(16000 * 120) * 0.002).astype(np.float32)
+    p = write(tmp_path, "noise16.f32", x)
+    probs = vad.speech_probabilities(p)
+    assert vad.speech_regions(probs, len(x)) == []
+
+
+def test_subtitle_credits_and_noise_phrases_are_artefacts():
+    assert is_known_artefact("Danske tekster af Jesper Buhl Scandinavian Text Service 2018")
+    assert is_known_artefact("Tak fordi du lyttede med.")
+    assert is_known_artefact("Thank you.")
+    assert not is_known_artefact("Jeg vil gerne sige tak for i går.")
+
+
+def test_repeated_low_confidence_short_segments_are_collapsed():
+    from audiorefine.transcriber import Transcriber
+    from audiorefine.transcript import TSegment
+
+    t = Transcriber.__new__(Transcriber)
+    t.stats = {"duplicate_segments_dropped": 0}
+    noise = [TSegment(i * 10.0, i * 10.0 + 1, "Thank you.", uncertain=True) for i in range(6)]
+    real = [TSegment(100 + i, 100.5 + i, "Ja.", uncertain=False) for i in range(4)]
+    out = t._dedupe_across(noise + real)
+    assert len([s for s in out if s.text == "Thank you."]) == 1
+    assert len([s for s in out if s.text == "Ja."]) == 4      # confident short repeats are real speech

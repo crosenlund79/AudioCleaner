@@ -398,7 +398,13 @@ class Transcriber:
         return cleaned
 
     def _dedupe_across(self, segs: list[TSegment]) -> list[TSegment]:
-        """Drop a segment that exactly repeats the previous two (a decoding loop across windows)."""
+        """Drop decoding loops across windows.
+
+        * a segment of >= 4 words that exactly repeats the previous two;
+        * a run of >= 3 consecutive *low-confidence* segments with the same short text
+          (e.g. "Thank you." over and over in noise): only the first is kept, flagged.
+        Confident repetitions of short words ("ja", "okay") are real speech and are kept.
+        """
         out: list[TSegment] = []
         for seg in segs:
             n = normalise(seg.text)
@@ -407,7 +413,22 @@ class Transcriber:
                 out[-1].uncertain = True
                 continue
             out.append(seg)
-        return out
+        res: list[TSegment] = []
+        i = 0
+        while i < len(out):
+            j = i
+            n = normalise(out[i].text)
+            while j + 1 < len(out) and normalise(out[j + 1].text) == n:
+                j += 1
+            run = out[i:j + 1]
+            if len(run) >= 3 and not run[0].marker and all(r.uncertain for r in run):
+                run[0].note = "repeated low-confidence text removed"
+                res.append(run[0])
+                self.stats["duplicate_segments_dropped"] += len(run) - 1
+            else:
+                res.extend(run)
+            i = j + 1
+        return res
 
     def _mark_unclear(self, segs: list[TSegment], regions: list[tuple[int, int]], probs: np.ndarray) -> list[TSegment]:
         """Insert '[unclear speech]' where VAD is confident about speech but nothing was transcribed."""
