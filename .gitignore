@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+/build/
+/dist/
+/native/arfilter/target/
+/.venv/
+*.f32
+/tools/experiments/results/raw/
