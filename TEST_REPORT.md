@@ -1,4 +1,4 @@
-# AudioRefine 1.0 – Test report
+# AudioRefine – Test report (versions 1.0 and 1.1)
 
 Status legend: **Verified** = executed and passed, with evidence below. **Partly verified** =
 covered by automated or indirect checks only. **Unverified** = not executed (reason given).
@@ -13,7 +13,7 @@ Test environments:
 
 | Area | Status | Evidence |
 |---|---|---|
-| Automated test suite (112 tests) on Linux | Verified | §2 |
+| Automated test suite (120 tests) on Linux | Verified | §2 |
 | Same suite on Windows (GitHub Actions) | Verified – 112/112 passed in run #6, re-run on every push | §2 |
 | Portable Windows build (PyInstaller) builds; packaged self-test | Verified | §3 |
 | Packaged desktop window starts on Windows and lists a folder | Verified (automated screenshot, native Windows platform) | §3 |
@@ -30,9 +30,34 @@ Test environments:
 | AMR input | Partly verified – AMR-NB/WB decoders present in the bundled FFmpeg; no encoder available to create a test file | §2 |
 | Behaviour when the PC loses power | Partly verified – engine process killed mid-run (same effect on files) | §2 |
 
+## 1a. Version 1.1 – chronological hour-by-hour processing
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Recordings from multiple days, several per hour, missing hours (no empty folders) | Verified | `test_multi_day_hourly_structure_and_transcripts`, CI end-to-end |
+| Chronological order: oldest hour first, each hour finished before the next | Verified | same test (order of `hour_done` events), CI |
+| Recording crossing an hour boundary: split exactly at 09:00:00, no word lost or duplicated | Verified | test (split at sample 30·48000), manual check, CI WER for the crossing span |
+| Recording crossing midnight | Verified | test, manual check |
+| Recording time: file name, metadata (UTC → local), creation time (consistency check), modification time minus duration (≈ estimated) | Verified | `test_hours.py`, `test_recording_time_without_timestamp_is_estimated`, CI |
+| Daylight-saving transitions (autumn repeated hour, spring missing hour) | Verified on Linux (`TZ` switch); on Windows the same code path uses Windows' time-zone rules – not separately verified | `test_daylight_saving_transitions` |
+| 10-minute segmentation inside an hour, last one shorter, no silence added | Verified | `test_ten_minute_segments_inside_an_hour` (10 s units, same code), CI hour 10-00 (10:00 + rest) |
+| Clock times in transcripts; SRT relative to its audio file | Verified | tests, CI |
+| `Transcript_Hour_Complete.txt`, `Transcript_Day_Complete.txt`, `Transcript_Master_Complete.txt` | Verified | tests, CI |
+| Master transcript updated after every hour (incremental), status in progress / interrupted / complete | Verified | `test_cancel_during_hour_then_resume`, window test (master available after the first hour) |
+| Cancellation during an hour; resume continues without redoing finished hours | Verified | `test_cancel_during_hour_then_resume` |
+| Crash during an hour (engine process killed) → finished hours intact, retry continues | Verified | `test_engine_killed_mid_hour_then_retry` |
+| Interrupted hour replacement / interrupted day+master update / interrupted archiving → repaired on next run without re-transcription | Verified | `test_recover_interrupted_replacement`, `test_repairs_combined_transcripts_and_archives_pending` |
+| Recording added later to a finished hour: existing audio reused bit-exactly, only the new recording processed | Verified | `test_late_recordings_and_older_date` (array equality of reused samples) |
+| Recording added for an older date appears in its chronological place | Verified | same test |
+| Repeated processing without new recordings: nothing changes; a copy of a processed recording is not processed again | Verified | `test_repeat_without_new_recordings_and_duplicate_copy` |
+| Original not archived until all its parts are finished; archived by its start hour; never overwritten | Verified | cancel/kill tests (crossing recording stays until 09-00 is finished), `test_archive_never_overwrites` |
+| Completed hours usable while later hours are processed | Verified | window test (files present and master button enabled during the run) |
+| Windows end-to-end of the packaged application in the hourly layout | see §3 | GitHub Actions |
+| Very large collections (hundreds of hours) | Partly verified – design (manifest-based regeneration, per-recording caches) and the 2-hour test; not run at that scale | §5 |
+
 ## 2. Automated tests
 
-`python -m pytest` (`tests/`), 112 tests. Pipeline tests use the real pipeline with the small
+`python -m pytest` (`tests/`), 120 tests. Pipeline tests use the real pipeline with the small
 `faster-whisper-tiny` model on real FLEURS speech; everything else runs without a model.
 
 | File | Tests | What is covered |
@@ -42,12 +67,13 @@ Test environments:
 | `test_decode_discovery.py` | 22 | 8 sample rates (8–96 kHz) to exact 48 kHz duration; WAV, FLAC, OGG, MP3, M4A/AAC, Opus, AIFF, WMA, ADTS-AAC decode; mono/stereo/phase-inverted/dead-channel downmix; damaged, empty and truncated files; top-level-only discovery, subfolders/hidden/temp/unrelated files ignored |
 | `test_segments_transcript.py` | 17 | exact 10-minute segmentation for N−1, N, N+1 samples and multi-hour (5.5 h → 34 files); FLAC write/read-back with samples just before/at/after a boundary, no loss/duplication; segment verification; timestamp formats; sentence crossing 10:00 split at word level with `…`; word exactly at 10:00.000; SRT relative (10:04 → 00:00:04) and TXT absolute; SRT cue limits/no overlap/no lost words; markers; complete transcript; empty segment |
 | `test_batch_safety.py` | 12 | batch name collisions (`_2`, `_3`); staging + atomic commit; never overwrite; stale-staging cleanup only with marker; archive with SHA-256 verification; existing file in `processed` not overwritten; **partial archival failure (file locked) and recovery on the next run**; original changed after processing is not moved; crash between move and journal; folder lock; stale lock; stale work folders; scan cleans up after a killed run |
-| `test_enhance_asr_logic.py` | 24 | arfilter keeps exact length (0, 1, 479–481, …) and adds no delay; parallel chunks ≈ single pass (< −26 dB); leveller: −1 dBFS ceiling, door slam limited, quiet speech raised, nothing gated; 20 dB speaker difference equalised to < 6 dB; hum detection 50/60 Hz; bounded plan; VAD regions/padding; **VAD detects a −65 dBFS utterance** and **does not turn 2 minutes of room noise into speech**; subtitle-credit artefacts; repeated low-confidence segments; clip/block planning; per-clip gain; hallucination phrases; repetition loops; duplicated-sentence detection; uncertainty flags; language policy (Norwegian/Swedish → Danish, hysteresis, other languages) |
-| `test_pipeline.py` | 11 | full run (mixed m4a/mp3/wav, outputs, order, back-to-back stitching, archive checksums, unrelated file untouched, transcript text never in the log); **repeat processing** only new files, old batch untouched; **cancellation** leaves everything unchanged; failure injection (missing enhancement helper) → nothing moved; corrupt model → clean failure; insufficient disk space; leftovers of a crash cleaned and retry; locked original completed on a later run (also with no new recordings); Danish characters `æøå ÆØÅ –` in folder and file names; **engine process killed mid-run** then retry; (slow) 21-minute recording → 10:00 + 10:00 + 1:00 |
+| `test_enhance_asr_logic.py` | 25 | arfilter keeps exact length (0, 1, 479–481, …) and adds no delay; parallel chunks ≈ single pass (< −26 dB); leveller: −1 dBFS ceiling, door slam limited, quiet speech raised, nothing gated; 20 dB speaker difference equalised to < 6 dB; hum detection 50/60 Hz; bounded plan; VAD regions/padding; **VAD detects a −65 dBFS utterance** and **does not turn 2 minutes of room noise into speech**; subtitle-credit artefacts; repeated low-confidence segments; clip/block planning; per-clip gain; hallucination phrases; repetition loops; duplicated-sentence detection; uncertainty flags; language policy (Norwegian/Swedish → Danish, hysteresis, other languages) |
+| `test_pipeline.py` | 11 | version 1.1 end-to-end (real speech, whisper-tiny): multi-day folder with several recordings per hour, a missing hour, a recording across 09:00 and one across midnight → exact folder structure, chronological processing, archive layout and checksums, sample conservation per recording, chronological master without duplicates, clock times, relative SRT; 10-minute segmentation inside an hour; cancel during an hour and resume; recordings added to a finished hour and to an older date (bit-exact reuse); repeat runs and duplicate copies; repair of combined transcripts and pending archiving; estimated recording time; failure injection; disk space; Danish characters; engine killed mid-hour then retry |
+| `test_hours.py` | 7 | recording-time priority, file-system fallbacks, implausible metadata; exact hour splitting incl. midnight; DST transitions; recovery of interrupted hour replacements; archive never overwrites |
 
 Results:
 
-* Linux: 112 passed (the slow 21-minute test is run separately).
+* Linux: 120 passed (≈ 10 minutes; the 2-hour stress test of §5 is run separately).
 * Windows (GitHub Actions run #6): 112 passed, 0 failed, 0 skipped.
 
 ## 3. Windows build and packaged end-to-end verification (GitHub Actions)
