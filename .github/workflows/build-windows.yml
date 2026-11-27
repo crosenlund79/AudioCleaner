@@ -162,12 +162,16 @@ jobs:
           Get-Content "$env:RUNNER_TEMP\sound-events.jsonl" | Where-Object { $_ -notmatch '"type": "progress"' }
           if ($rc -ne 0) { exit 1 }
           # the transcribed folder: originals are now in 'processed'; also produces the annotated transcript
+          python tools/ci/verify_sound_e2e.py --snapshot "$env:RUNNER_TEMP\Audio dumps"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Audio dumps" > "$env:RUNNER_TEMP\sound-events-2.jsonl"
           $rc = $LASTEXITCODE
           Get-Content "$env:RUNNER_TEMP\sound-events-2.jsonl" | Where-Object { $_ -notmatch '"type": "progress"' }
           if ($rc -ne 0) { exit 1 }
           # a second run must find nothing new
-          dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Sound dumps" | Select-String '"type": "result"'
+          $again = dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Sound dumps" | Select-String '"type": "result"'
+          "$again"
+          if ("$again" -notmatch 'Nothing new to analyse') { "The repeated run did not report 'Nothing new'"; exit 1 }
 
       - name: Verify sound analysis results
         run: python tools/ci/verify_sound_e2e.py "$env:RUNNER_TEMP\Sound dumps" "$env:RUNNER_TEMP\Audio dumps"

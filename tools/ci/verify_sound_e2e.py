@@ -1,7 +1,9 @@
 """Verify a packaged 'analyze' run on the folder made by make_sound_folder.py, and (optionally) the
 analysis of the transcription end-to-end folder (archived originals + annotated transcript).
 
-usage: verify_sound_e2e.py SOUND_FOLDER [TRANSCRIBED_FOLDER]      exit 1 on failure"""
+usage: verify_sound_e2e.py SOUND_FOLDER [TRANSCRIBED_FOLDER]      exit 1 on failure
+       verify_sound_e2e.py --snapshot FOLDER    before the analysis: SHA-256 of every file outside
+                                                analysis/ -> FOLDER.hashes.json (compared afterwards)"""
 import hashlib
 import json
 import sys
@@ -23,7 +25,18 @@ def secs(hms):
     return h * 3600 + m * 60 + s
 
 
+def file_hashes(folder: Path) -> dict:
+    return {str(p.relative_to(folder)).replace("\\", "/"): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(folder.rglob("*")) if p.is_file() and p.relative_to(folder).parts[0] != "analysis"}
+
+
 def main():
+    if sys.argv[1] == "--snapshot":
+        f = Path(sys.argv[2]).resolve()
+        h = file_hashes(f)
+        Path(str(f) + ".hashes.json").write_text(json.dumps(h, indent=1), encoding="utf-8")
+        print(f"{len(h)} files recorded")
+        return
     root = Path(sys.argv[1]).resolve()
     exp = json.loads(Path(str(root) + ".expect.json").read_text(encoding="utf-8"))
     cats = json.loads((ROOT / "assets" / "sound" / "categories.json").read_text(encoding="utf-8"))
@@ -83,6 +96,13 @@ def main():
                                                          "entries unchanged")
         check("refined" not in str(ta / "Transcript_Master_Annotated.txt").split("analysis")[1],
               "annotated transcript stored under analysis")
+        snap = Path(str(t) + ".hashes.json")
+        if snap.is_file():
+            before = json.loads(snap.read_text(encoding="utf-8"))
+            after = file_hashes(t)
+            changed = sorted(k for k in set(before) | set(after) if before.get(k) != after.get(k))
+            check(not changed, f"transcribed folder: all {len(before)} files outside analysis/ (archived originals, "
+                               f"enhanced audio, transcripts) byte-identical after the analysis {changed[:5]}")
         print("\n===== Transcript_Master_Annotated.txt (start) =====\n" + ann[:2500])
     if failures:
         print(f"\n{len(failures)} check(s) failed")

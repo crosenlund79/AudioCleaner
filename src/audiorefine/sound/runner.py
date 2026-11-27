@@ -279,6 +279,7 @@ def analyze_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
             data = reports.write_combined(root, fp, vocab, "COMPLETE")
             reports.write_annotated(root, data)
             finished = True
+            log.info("Nothing new to analyse; reports refreshed")
             return SoundOutcome("success", "Nothing new to analyse – all recordings in this folder have already "
                                            "been analysed. The reports were refreshed.", warnings,
                                 report=str(store.adir(root) / store.MASTER_TXT))

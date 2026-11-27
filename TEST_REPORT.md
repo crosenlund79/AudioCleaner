@@ -131,6 +131,24 @@ Each push runs `.github/workflows/build-windows.yml` on `windows-latest`:
 
 7. Automatic verification (`tools/ci/verify_e2e.py`) and upload of the ZIP and of the
    verification material (screenshot, logs, all outputs).
+8. *(since 1.2)* Sound folder built by `tools/ci/make_sound_folder.py` from the CC0/PD clips in
+   `tests/data/sounds`, mixed into room noise and speech at known clock times:
+
+   | File | Sounds (clock time) |
+   |---|---|
+   | `20251127_074000.flac` (6 min, speech) | knocking 07:41:40, alarm clock 07:43:00, typing 07:44:00 |
+   | `20251127_085945.m4a` (2 min) | laughter 08:59:52 (hour 08), knocking 09:00:20 (hour 09) |
+   | `20251127_171000.mp3` (4 min) | frying 17:10:30, microwave 17:12:00 |
+   | `20251128_031500.wav` (3 min, next day) | snoring 03:15:30, cat 03:16:30 |
+   | `processed/2025-11-26/20-00/20251126_201500.flac` (already archived) | doorbell 20:15:10, baby crying 20:15:40 |
+   | `Optagelse uden tid.flac` (no time; estimated from the file date) | sneeze ≈06:30:25 |
+   | `broken.wma`, `notes.txt` | must stay untouched |
+
+9. Packaged `AudioRefineEngine.exe --json analyze` of the sound folder **and** of the
+   transcribed folder from step 6 (whose originals are by then archived in `processed/`), then a
+   repeated run that must report "Nothing new"; verification by `tools/ci/verify_sound_e2e.py`.
+10. Packaged Sound Explorer on the native Windows platform: open the window, select the first
+    event, prepare playback, save a screenshot, exit with code 0.
 
 Results of run #7 (commit `316d031`, version 1.1.0; all checks passed):
 
@@ -153,6 +171,21 @@ Results of run #7 (commit `316d031`, version 1.1.0; all checks passed):
 | Processing time (17:23 of audio, ≈ 5 min of speech, 4 vCPU, CPU int8) | 9 min 26 s: transcription 476 s (≈ 1.5 × the speech timeline; includes the extra context around 09:00), enhancement 70 s, everything else < 5 s |
 
 The full master transcript of run #7 is in the job log and in the `verification-7` artifact.
+
+Results of run #13 (commit `8170f48`, version 1.2.0; all steps passed):
+
+| Check | Result |
+|---|---|
+| Test suite on Windows | 135 passed, 1 skipped (DST test), 0 failed |
+| Transcription end-to-end (unchanged from 1.1) | same 5 hour folders, archive and master transcript checks as run #7; WER Danish 08:04 7.4 %, English 08:30 4.3 %, Danish across 09:00 9.8 %, across the 10-minute boundary 10.7 %, English 07:12 2.1 % |
+| Sound folder: hours | exactly the 7 hours that contain audio (2025-11-26 20; 2025-11-27 07, 08, 09, 17; 2025-11-28 03, 06), in chronological order; the estimated recording marked ≈ |
+| Sound folder: detections | 10 of the 11 placed sounds of enabled categories found within ±1 s of the placed time (knocking ×2 incl. the one at 09:00:20 in hour 09, alarm, typing, frying, snoring, cat, doorbell, crying, sneeze); **missed:** the 1.3-second laughter clip. Microwave is a disabled category and was correctly not reported. No other detections. |
+| Originals | every file in the sound folder and in `processed/` byte-identical (SHA-256) after analysis; `broken.wma` reported as unreadable and left untouched |
+| Transcribed folder | the same 5 hours analysed from the archived originals in `processed/`; 0 sound events (speech and room noise only – correct); `Transcript_Master_Annotated.txt` written and every one of the 39 transcript entries found unchanged in it; `Transcript_Master_Complete.txt` untouched |
+| Repeated analysis | finds nothing new (run #13 printed it; asserted from run #14 on) |
+| Analysis speed (packaged, 4 vCPU runner) | 16 min 20 s of audio (6 recordings) in 10 s; 17 min 23 s in 11 s (≈ 95–100 × real time, including decoding and model loading) |
+| Sound Explorer (packaged, native Windows) | opens with 10 events in 9 categories, 24-hour timeline over 3 dates, first event selected; playback correctly reports "No audio output device could be opened" inline (the runner has no sound card); exit code 0 |
+| Portable ZIP | `AudioRefine-1.2.0-win-x64`, 175.9 MB (contains the 19.5 MB sound model; no download needed for sound analysis) |
 
 Version 1.0 results (run #6, commit `c88f917`, one continuous batch): 112/112 tests on Windows;
 WER Danish 7.4 %, English 2.1 %, Danish across the 10:00 boundary 9.8 %; 10 minutes of room
@@ -353,7 +386,8 @@ the same 4-CPU machine.
 | Whisper large-v3-turbo int8 CPU, 4 vCPU | ≈ 0.4–0.6 × the speech duration |
 | Model RAM (large-v3 int8) | ≈ 3.3 GB resident |
 | DeepFilterNet3 (arfilter), per core | real-time factor 0.16 (1 h of audio ≈ 10 CPU-minutes, parallel over cores) |
-| Portable ZIP | 156 MB download, 353 MB extracted |
+| Sound analysis (EfficientAT mn10, ONNX Runtime CPU) | 1 hour of M4A in 35 s with 4 threads (≈ 100 × real time), 89 s with 1 thread (≈ 40 ×); peak memory ≈ 460 MB |
+| Portable ZIP | 156 MB download, 353 MB extracted (1.1); 176 MB download (1.2, incl. sound model and PortAudio) |
 | Model download | 3.09 GB (+ 1.26 GB GPU runtime only on suitable NVIDIA PCs) |
 
 ## 7. Known limitations found during testing

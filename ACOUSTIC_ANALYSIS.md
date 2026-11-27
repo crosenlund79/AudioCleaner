@@ -48,8 +48,9 @@ but CPU speed of the selected model is sufficient (§8), so GPU support was not 
 **EfficientAT `mn10_as`, exported to ONNX (19.5 MB, bundled), run with ONNX Runtime on the CPU,
 in a two-scale scheme (§5).**
 
-* Accuracy per CPU cost: on the AudioSet evaluation clips mn10 is within a few points of the
-  larger EfficientAT models, CNN14 and AST (§7.1), at 1/10 – 1/20 of their compute.
+* Accuracy per CPU cost: on the AudioSet evaluation clips mn10 (mean AP 0.694) is as accurate as
+  AST (0.694) and better than CNN14 (0.669), at 1/15 – 1/60 of their CPU time; only dymn20 is
+  clearly better (0.736) at 6 × the cost (§7.1).
 * Deployment: a single 19.5 MB ONNX file; the application already ships ONNX Runtime, so the
   package grows by only ~20 MB and needs no PyTorch (≈ 200 MB+), no download and no internet.
 * Licence: MIT (code and weights); the AudioSet label list is CC BY 4.0.
@@ -57,8 +58,8 @@ in a two-scale scheme (§5).**
   against the PyTorch front-end (max. difference 4·10⁻⁵).
 
 A two-stage design "cheap detector → large validator" (e.g. mn10 → AST or CLAP) was considered.
-It was not adopted: (1) the larger supervised models are only a few AP points better (§7.1) but
-10–40 × slower; (2) CLAP zero-shot accuracy for AudioSet-style categories is clearly below the
+It was not adopted: (1) the larger supervised models are at most a few AP points better (§7.1)
+but 6–60 × slower; (2) CLAP zero-shot accuracy for AudioSet-style categories is clearly below the
 supervised models in the literature; (3) a second model would add 350–750 MB and a second
 failure mode. The *two-scale* use of one model (§5) gave a larger gain than a bigger model would.
 
@@ -275,7 +276,50 @@ game music*.
 
 ### 7.1 Model comparison (AudioSet evaluation clips, 10-second clips)
 
-<!-- CMP -->
+992 AudioSet evaluation clips (25 positives per category where available + 400 negatives),
+each model on the whole 10-second clip (the condition all of them were trained for), average
+precision per category (max over the category's AudioSet classes). Time per clip measured
+separately on 20 clips, 4 CPU threads (Intel Xeon 2.1 GHz), after warm-up.
+
+| Category | n | **mn10** (selected) | dymn10 | dymn20 | mn40_ext | CNN14 | CNN14-DecisionLevelMax | AST |
+|---|---|---|---|---|---|---|---|---|
+| Crying / sobbing | 42 | 0.89 | 0.89 | 0.90 | 0.89 | 0.85 | 0.77 | 0.87 |
+| Laughter | 32 | 0.61 | 0.57 | 0.61 | 0.58 | 0.52 | 0.51 | 0.59 |
+| Coughing | 26 | 0.79 | 0.85 | 0.85 | 0.82 | 0.83 | 0.78 | 0.77 |
+| Sneezing | 25 | 0.67 | 0.68 | 0.71 | 0.70 | 0.72 | 0.59 | 0.62 |
+| Shouting | 25 | 0.76 | 0.83 | 0.83 | 0.79 | 0.78 | 0.71 | 0.81 |
+| Screaming | 25 | 0.71 | 0.63 | 0.72 | 0.62 | 0.61 | 0.54 | 0.57 |
+| Footsteps | 25 | 0.70 | 0.61 | 0.66 | 0.68 | 0.53 | 0.61 | 0.62 |
+| Knocking | 26 | 0.72 | 0.76 | 0.83 | 0.79 | 0.71 | 0.82 | 0.82 |
+| Banging / impact | 25 | 0.43 | 0.49 | 0.48 | 0.49 | 0.39 | 0.33 | 0.45 |
+| Door opening / closing | 20 | 0.35 | 0.34 | 0.43 | 0.37 | 0.38 | 0.31 | 0.34 |
+| Hairdryer | 25 | 0.93 | 0.93 | 0.95 | 0.91 | 0.92 | 0.92 | 0.98 |
+| Toothbrush | 25 | 0.68 | 0.73 | 0.75 | 0.76 | 0.72 | 0.61 | 0.76 |
+| Running or pouring water | 32 | 0.81 | 0.82 | 0.86 | 0.79 | 0.80 | 0.66 | 0.81 |
+| Frying / sizzling | 27 | 0.88 | 0.87 | 0.90 | 0.87 | 0.91 | 0.84 | 0.89 |
+| Dishes / cutlery | 25 | 0.52 | 0.59 | 0.64 | 0.61 | 0.62 | 0.51 | 0.59 |
+| Microwave oven | 26 | 0.52 | 0.58 | 0.55 | 0.53 | 0.45 | 0.41 | 0.55 |
+| Blender | 25 | 0.75 | 0.75 | 0.79 | 0.77 | 0.67 | 0.51 | 0.72 |
+| Vacuum cleaner | 25 | 0.77 | 0.76 | 0.73 | 0.75 | 0.69 | 0.65 | 0.78 |
+| Fan / air conditioning | 26 | 0.67 | 0.67 | 0.71 | 0.64 | 0.55 | 0.42 | 0.63 |
+| Music | 121 | 0.74 | 0.77 | 0.79 | 0.74 | 0.79 | 0.61 | 0.68 |
+| Television | 26 | 0.42 | 0.45 | 0.57 | 0.38 | 0.33 | 0.22 | 0.43 |
+| Video game music | 28 | 0.89 | 0.93 | 0.91 | 0.91 | 0.87 | 0.80 | 0.91 |
+| Dog barking | 28 | 0.81 | 0.83 | 0.86 | 0.86 | 0.83 | 0.75 | 0.82 |
+| Engine | 30 | 0.63 | 0.64 | 0.64 | 0.61 | 0.57 | 0.57 | 0.64 |
+| **Mean AP** | | **0.694** | 0.707 | **0.736** | 0.702 | 0.669 | 0.604 | 0.694 |
+| **s per 10 s clip, 4 threads** | | **0.012** (ONNX) / 0.030 (PyTorch) | 0.046 | 0.071 | 0.101 | 0.186 | 0.186 | 0.697 |
+| Parameters / file size | | 4.9 M / 19.5 MB | 10.6 M / 42 MB | 40 M / 160 MB | 68 M / 274 MB | 80 M / 327 MB | 80 M / 327 MB | 87 M / 345 MB |
+
+mn10 in ONNX gives exactly the same scores as in PyTorch (identical column, not repeated).
+With ~25 positives per category the per-category differences of a few points are within noise;
+the means are more reliable. Reading: **mn10 is as accurate as AST and better than both PANNs
+models at 1/15 – 1/60 of their CPU time.** **dymn20 is the only clearly better candidate
+(+4 AP points on average)** but is 6 × slower, 8 × larger, and its dynamic convolutions did not
+export to ONNX with the standard exporter (PyTorch would add ~200 MB to the package). It is the
+first candidate for a future upgrade (§16). The frame-wise CNN14 variant, designed for event
+detection, was clearly worse as a detector. AST needs fixed 10-second inputs, so ±1 s localisation
+would cost 10 inferences per second of audio (≈ 7 × real time on 4 threads).
 
 ### 7.2 Held-out AudioSet evaluation clips (the application's two-scale scoring)
 
@@ -395,7 +439,10 @@ one without a recording time) with real CC0/PD sounds at −24 dBFS in room nois
 10 of the 11 expected sounds of enabled categories were found, each within ±1 s of the true
 start (the missed one is a 1.3-second laugh); the knock at 09:00:20 in the recording that
 started at 08:59:45 appears once, in the 09:00 hour; the recording without a time is marked ≈;
-originals unchanged; a second run finds nothing new. The same check runs on Windows in CI (§8).
+originals unchanged; a second run finds nothing new. The same check runs on every push with the
+packaged Windows build (TEST_REPORT.md §3, run #13: identical result – 10 of 11 found, no other
+detections; the transcribed folder's archived originals analysed, 0 events in speech-only audio,
+annotated transcript with all 39 entries unchanged).
 
 ## 8. Performance
 
@@ -403,6 +450,7 @@ originals unchanged; a second run finds nothing new. The same check runs on Wind
 |---|---|
 | Analysis speed, 1 hour of audio (M4A), 4 threads, Intel Xeon 2.1 GHz (cloud VM) | 35 s (≈ 100 × real time) |
 | Same, 1 thread | 89 s (≈ 40 × real time) |
+| Packaged Windows build on the CI runner (4 vCPU), 16–17 min of audio | 10–11 s incl. model loading (≈ 95 × real time) |
 | Peak memory (whole process) | ≈ 460 MB |
 | Model inferences per hour of audio | 3,600 localisation + 720 context windows |
 | Added to the portable ZIP | ≈ 20 MB (model 19.5 MB, labels, vocabulary) + PortAudio ≈ 0.3 MB |
@@ -546,7 +594,8 @@ model choice, no audio editing. Sounds are reported as observable sounds ("Cryin
   AudioSet thresholds only.
 * A frame-level detector trained for strong labels (e.g. ATST-Frame, BEATs-based DCASE
   systems) for sharper boundaries of short sounds.
-* An ensemble (mn10 + dymn20) for categories near the enable threshold.
+* Switch to (or add) EfficientAT `dymn20_as` (+4 AP points in §7.1): needs an ONNX export of its
+  dynamic convolutions (e.g. the dynamo-based exporter) and re-running the tuning (§6).
 * GPU / DirectML execution for very large collections.
 * A "playback device" detector trained to separate loudspeaker audio from room sound.
 * More activity rules once the supporting categories are validated on real homes.
