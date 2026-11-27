@@ -21,6 +21,8 @@ datas += collect_data_files("faster_whisper")          # Silero VAD model
 datas += collect_data_files("av")
 datas += collect_data_files("soundfile")
 datas += collect_data_files("onnxruntime", includes=["**/*.dll", "**/*.so*", "**/*.pyd"])
+# PortAudio (playback in Sound Explorer) is collected by the sounddevice hook of pyinstaller-hooks-contrib
+datas += [(str(f), "assets/sound") for f in sorted((ROOT / "assets" / "sound").iterdir()) if f.is_file()]
 datas += [(str(ROOT / "assets" / "audiorefine.ico"), "assets"),
           (str(ROOT / "assets" / "audiorefine.png"), "assets"),
           (str(ROOT / "THIRD_PARTY_NOTICES.txt"), "."),
@@ -31,7 +33,7 @@ binaries += collect_dynamic_libs("onnxruntime")
 binaries += collect_dynamic_libs("av")
 binaries += collect_dynamic_libs("soundfile")
 
-hidden = ["audiorefine.cli", "audiorefine.gui.app", "truststore"]
+hidden = ["audiorefine.cli", "audiorefine.gui.app", "truststore", "sounddevice", "_cffi_backend"]
 hidden += collect_submodules("audiorefine")
 hidden += collect_submodules("faster_whisper")
 hidden += collect_submodules("av")

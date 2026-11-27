@@ -21,18 +21,32 @@ dictaphone files, voice memos …) into speech-enhanced audio and timestamped tr
 Everything runs locally on your computer. Recordings are never uploaded anywhere.
 Danish and English are recognised automatically (also mixed in the same batch).
 
+AudioRefine has three functions, each started separately:
+
+| Button | What it does |
+|---|---|
+| **Process and transcribe** | speech enhancement, 10-minute audio files and transcripts per hour (above) |
+| **Analyze sounds** | recognises everyday non-speech sounds – laughter, crying, knocking, a hairdryer, frying, music, a dog barking … – in the **original** recordings, one clock hour at a time; results in an `analysis` folder; nothing is moved or changed |
+| **Sound Explorer** | browse the detected sounds by sound or by time, see them on a 24-hour timeline, listen to each one from the right place in the original recording, and mark detections as confirmed or incorrect |
+
+See [Analyze sounds and Sound Explorer](#analyze-sounds-and-sound-explorer) below and
+ACOUSTIC_ANALYSIS.md for how it works and how reliable it is.
+
 ---
 
 ## Getting started
 
-1. Download the portable ZIP (`AudioRefine-1.0.0-win-x64`) and extract it anywhere,
+1. Download the portable ZIP (`AudioRefine-1.2.0-win-x64`) and extract it anywhere,
    e.g. to `C:\Tools\AudioRefine`.
 2. Start **`AudioRefine.exe`**.
 3. Click **Browse…** and choose the folder with your recordings
    (or drag the folder onto the window).
 4. Check the list: it shows each recording's detected date and time and the hour it belongs to.
-5. Click **Process folder**. The window shows the current day and hour, how many hours are done,
-   and the overall progress. **Open master transcript** becomes available after the first hour.
+5. Click **Process and transcribe**. The window shows the current day and hour, how many hours
+   are done, and the overall progress. **Open master transcript** becomes available after the
+   first hour.
+6. Optionally click **Analyze sounds** (before or after transcribing – the two are independent)
+   and then **Sound Explorer**.
 
 The **first time**, AudioRefine asks to download its speech-recognition model
 (Whisper large-v3, 3.1 GB; plus 1.3 GB of acceleration files if you have a suitable NVIDIA
@@ -147,6 +161,66 @@ hour records after every finished hour – nothing is transcribed twice.
 
 ---
 
+## Analyze sounds and Sound Explorer
+
+**Analyze sounds** listens to the *original* recordings (not the speech-enhanced audio, which
+deliberately removes many of these sounds) and recognises everyday sounds with a sound
+classifier that runs on your computer (EfficientAT, trained on Google's AudioSet; included in the
+program, no download). It works like the transcription: oldest day first, one clock hour at a
+time, and each finished hour can be browsed while the next one is analysed. It reads recordings
+directly in the folder *and* those already moved to `processed`, so you can analyse before or
+after transcribing. Recordings are only read – never moved, changed or deleted.
+
+```
+C:\Audio dumps\
+    analysis\
+        Sound_Events_Master.txt         all detected sounds, chronological – to read or upload
+        Sound_Events_Master.json        the same, machine-readable
+        Transcript_Master_Annotated.txt the transcript with sound annotations (if transcribed)
+        2025-11-25\
+            Sound_Events_Day.txt
+            08-00\  Sound_Events.txt  Sound_Events.json
+```
+
+Example from `Sound_Events_Master.txt`:
+
+```
+08:14:22 – 08:14:28
+Detected sound: Knocking
+Confidence: High
+Repeated: 3 occurrences close together
+Source: 20251125_080412.m4a at 00:10:10 (enhanced audio: refined\2025-11-25\08-00\Audio_002.flac at 00:00:10)
+
+17:12:05 – 17:38:42
+Possible activity: Cooking
+Confidence: Moderate
+Supporting sounds: Frying / sizzling, Microwave oven
+```
+
+* One entry per occurrence: a hairdryer running for six minutes is one entry, not hundreds.
+* **Confidence** is *High* or *Moderate*; weaker detections are not listed. It is the
+  classifier's own rating, not a measured probability. **Detections can be wrong, and a sound
+  that is not listed may still have happened.**
+* Sounds from a TV, radio, phone or game can be recognised as if they happened in the room;
+  detections while music or TV audio is playing are marked *during music/TV audio*.
+* *Possible activities* (cooking, washing up) are only suggested when several different
+  supporting sounds occur close together, and are always shown as possibilities.
+* No speaker identification, no emotion or behaviour analysis – only sounds.
+* Running **Analyze sounds** again only analyses new recordings; nothing is duplicated.
+
+**Sound Explorer** lists the detected sounds with their counts (*Laughter 27, Knocking 14 …*).
+Choose a sound to see when it occurred, grouped by date and hour, or switch to *Chronological*.
+Filter by date, hours and confidence. The timeline shows the day from 00:00 to 24:00 (click an
+hour to zoom in). Select an occurrence and press **Play from event**: playback starts a few
+seconds before the sound in the original recording (or, if the folder was transcribed, in the
+enhanced audio), and you can keep listening, pause and seek. Mark each occurrence as
+**Confirmed** or **Incorrect detection**; incorrect ones are hidden from the lists and reports
+(your marks are kept separately; the machine's label is never changed).
+
+Which sounds are recognised, and how well, is listed in ACOUSTIC_ANALYSIS.md.
+
+---
+
 ## How the recording time is determined
 
 AudioRefine uses the most reliable information available, in this order:
@@ -174,7 +248,7 @@ simplest fix is to rename the file with its correct date and time (`YYYYMMDD_HHM
   crashes, finished hours, the day transcripts and the master transcript stay complete and
   usable; the hour being worked on is discarded and simply redone next time. Process the same
   folder again and AudioRefine continues with the remaining hours.
-* Add new recordings to the folder at any time and press **Process folder** again. Only the
+* Add new recordings to the folder at any time and press **Process and transcribe** again. Only the
   affected hours are processed: a recording for an hour that is already finished is merged into
   that hour (the existing audio is reused bit-for-bit and its transcript is kept, only the new
   recording is enhanced and transcribed), recordings from older dates are placed in their

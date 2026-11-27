@@ -109,6 +109,8 @@ class MainWindow(QMainWindow):
         self.master_path: str | None = None
         self.cpu_retry_done = False
         self._close_after_cancel = False
+        self.explorer = None
+        self._crash_text = ""
         self._build()
         self.tick = QTimer(self)
         self.tick.timeout.connect(self._on_tick)
@@ -172,10 +174,24 @@ class MainWindow(QMainWindow):
 
         brow = QHBoxLayout()
         brow.addStretch(1)
-        self.process_btn = QPushButton("Process folder", objectName="primary")
-        self.process_btn.setMinimumWidth(220)
+        self.process_btn = QPushButton("Process and transcribe", objectName="primary")
+        self.process_btn.setToolTip("Enhance the speech, cut it into 10-minute files per clock hour and transcribe it "
+                                    "(results in 'refined'; originals are moved to 'processed')")
+        self.process_btn.setMinimumWidth(200)
         self.process_btn.clicked.connect(self.on_process)
+        self.analyze_btn = QPushButton("Analyze sounds", objectName="primary")
+        self.analyze_btn.setToolTip("Recognise non-speech sounds (laughter, knocking, hairdryer, music …) in the original "
+                                    "recordings, one hour at a time (results in 'analysis'; nothing is moved or changed)")
+        self.analyze_btn.setMinimumWidth(170)
+        self.analyze_btn.clicked.connect(self.on_analyze)
+        self.explorer_btn = QPushButton("Sound Explorer")
+        self.explorer_btn.setToolTip("Browse, play and review the detected sounds")
+        self.explorer_btn.setMinimumWidth(150)
+        self.explorer_btn.setMinimumHeight(38)
+        self.explorer_btn.clicked.connect(self.open_explorer)
         brow.addWidget(self.process_btn)
+        brow.addWidget(self.analyze_btn)
+        brow.addWidget(self.explorer_btn)
         brow.addStretch(1)
         v.addLayout(brow)
 
@@ -385,6 +401,12 @@ class MainWindow(QMainWindow):
             self.stage_label.setText(stage)
             self.bar.setValue(int(ev.get("fraction", 0) * 1000))
             self.last_eta = ev.get("eta")
+        elif t == "hour_done" and self.job_kind == "analyze":
+            self.explorer_btn.setEnabled(True)
+            self.device_label.setText(f"Finished {ev.get('date')} {ev.get('hour')} ({ev.get('events', 0)} sound "
+                                      f"event(s)) – open Sound Explorer while the next hours are analysed.")
+            if self.explorer is not None and self.explorer.isVisible():
+                self.explorer.reload()
         elif t == "hour_done":
             self.master_path = ev.get("master")
             self.master_btn.setEnabled(bool(self.master_path))
@@ -424,6 +446,26 @@ class MainWindow(QMainWindow):
                 self._finish_ui()
                 self._banner("err" if st != "cancelled" else "info",
                              result.get("message") or "The download did not complete. Try again; it will resume.")
+            return
+        if kind == "analyze":
+            self._finish_ui()
+            st = result.get("status")
+            msg = result.get("message") or ("The sound analysis stopped unexpectedly. Your recordings were not "
+                                            "changed; analyse the folder again to continue.")
+            warns = result.get("warnings") or []
+            extra = ("\n\nNotes:\n• " + "\n• ".join(warns[:8])) if warns else ""
+            if st == "success":
+                self._banner("ok", "✔ " + msg + f"\nTotal time {fmt_hms(time.time() - self.started)}." + extra)
+            elif st == "cancelled":
+                self._banner("info", msg)
+            else:
+                self._banner("err", "✕ " + msg + extra)
+            if self.explorer is not None and self.explorer.isVisible():
+                self.explorer.reload()
+            if self._close_after_cancel:
+                self.close()
+                return
+            self.rescan_after()
             return
         if kind == "process":
             st = result.get("status")
@@ -477,6 +519,30 @@ class MainWindow(QMainWindow):
             self._ask_download()
             return
         self._start_processing()
+
+    def on_analyze(self):
+        if not self.folder or self.busy():
+            return
+        self._crash_text = ""
+        self._set_busy("analyze")
+        self.stage_label.setText("<b>Starting sound analysis…</b>")
+        self._start_job("analyze", ["analyze", str(self.folder)])
+
+    def open_explorer(self):
+        if not self.folder:
+            return
+        from .sound_explorer import SoundExplorer
+
+        if self.explorer is not None and self.explorer.root != self.folder:
+            self.explorer.close()
+            self.explorer = None
+        if self.explorer is None:
+            self.explorer = SoundExplorer(self.folder)
+        else:
+            self.explorer.reload()
+        self.explorer.show()
+        self.explorer.raise_()
+        self.explorer.activateWindow()
 
     def _ask_download(self):
         st = self.status or {}
@@ -532,10 +598,12 @@ class MainWindow(QMainWindow):
         notices = bundle_dir() / "THIRD_PARTY_NOTICES.txt"
         QMessageBox.about(self, f"About {APP_NAME}",
                           f"<b>{APP_NAME} {__version__}</b><br>"
-                          "Speech enhancement and transcription for folders of recordings.<br><br>"
+                          "Speech enhancement, transcription and sound event detection for folders of recordings."
+                          "<br><br>"
                           "Runs entirely on this computer. Uses Whisper large-v3 (OpenAI, MIT) via faster-whisper/"
-                          "CTranslate2, DeepFilterNet3 (MIT/Apache-2.0), Silero VAD (MIT), FFmpeg (LGPL) via PyAV and "
-                          "Qt for Python (LGPL).<br><br>"
+                          "CTranslate2, DeepFilterNet3 (MIT/Apache-2.0), Silero VAD (MIT), EfficientAT mn10_as sound "
+                          "classifier (MIT; trained on Google AudioSet, CC BY 4.0) via ONNX Runtime (MIT), FFmpeg (LGPL) "
+                          "via PyAV, PortAudio via sounddevice (MIT) and Qt for Python (LGPL).<br><br>"
                           f"Licence details: {notices if notices.is_file() else 'THIRD_PARTY_NOTICES.txt'}<br>"
                           f"Logs: {logs_dir()}")
 
@@ -551,6 +619,7 @@ class MainWindow(QMainWindow):
         self.last_eta = None
         self.banner.hide()
         self.process_btn.setEnabled(False)
+        self.analyze_btn.setEnabled(False)
         self.browse_btn.setEnabled(False)
         self.cancel_btn.setEnabled(True)
         self.bar.setValue(0)
@@ -574,9 +643,10 @@ class MainWindow(QMainWindow):
         refined = self.folder / REFINED if self.folder else None
         self.open_btn.setEnabled(bool(refined and refined.is_dir()))
         self.master_btn.setEnabled(bool(refined and (refined / "Transcript_Master_Complete.txt").is_file()))
+        self.explorer_btn.setEnabled(bool(self.folder and (self.folder / "analysis" / "Sound_Events_Master.json").is_file()))
 
     def _set_idle(self):
-        working = self.busy() and self.job_kind in ("process", "download")
+        working = self.busy() and self.job_kind in ("process", "download", "analyze")
         self.bar.setVisible(working)
         self.stage_label.setVisible(working)
         self.time_label.setVisible(working)
@@ -585,19 +655,30 @@ class MainWindow(QMainWindow):
         work = plan.get("hours_to_process") or plan.get("pending_archive") or sc.get("pending")
         can = bool(work) and not self.busy() and not sc.get("busy")
         self.process_btn.setEnabled(can)
+        has_audio = bool(sc.get("sources")) or self._has_archived()
+        self.analyze_btn.setEnabled(bool(self.folder) and has_audio and not self.busy() and not sc.get("busy"))
         self.hour_label.setVisible(working)
         self._refresh_buttons()
 
+    def _has_archived(self) -> bool:
+        p = self.folder / "processed" if self.folder else None
+        if not p or not p.is_dir():
+            return False
+        for _dp, _dn, fns in os.walk(p):
+            if fns:
+                return True
+        return False
+
     def _on_tick(self):
-        if self.busy() and self.job_kind in ("process", "download"):
+        if self.busy() and self.job_kind in ("process", "download", "analyze"):
             t = f"Elapsed time: {fmt_hms(time.time() - self.started)}"
             if self.last_eta:
                 t += f"   ·   About {fmt_hms(self.last_eta)} remaining"
             self.time_label.setText(t)
 
     def closeEvent(self, e):
-        if self.busy() and self.job_kind in ("process", "download"):
-            r = QMessageBox.question(self, APP_NAME, "Processing is still running. Cancel it and close AudioRefine?\n\n"
+        if self.busy() and self.job_kind in ("process", "download", "analyze"):
+            r = QMessageBox.question(self, APP_NAME, "Work is still running. Cancel it and close AudioRefine?\n\n"
                                      "Your recordings stay unchanged.")
             if r != QMessageBox.StandardButton.Yes:
                 e.ignore()

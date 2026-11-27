@@ -20,6 +20,14 @@ truststore ......................... MIT                    https://github.com/s
 DeepFilterNet 0.5.6 (libDF + DeepFilterNet3 model, compiled into arfilter.exe)
                                      MIT OR Apache-2.0      https://github.com/Rikorose/DeepFilterNet
 tract (ONNX inference, in arfilter.exe) MIT OR Apache-2.0  https://github.com/sonos/tract
+EfficientAT mn10_as sound classifier (assets/sound/efficientat_mn10_as.onnx), Copyright (c) 2022 Florian
+  Schmid; pre-trained weights mn10_as_mAP_471.pt converted to ONNX without changes to the weights
+                                     MIT                    https://github.com/fschmid56/EfficientAT
+  trained on Google AudioSet; AudioSet class labels and ontology (assets/sound/audioset_labels.json)
+                                     CC BY 4.0 (Google)     https://research.google.com/audioset/
+sounddevice 0.5 (audio playback in Sound Explorer)
+                                     MIT                    https://github.com/spatialaudio/python-sounddevice
+PortAudio (shipped with sounddevice) MIT-style PortAudio licence  https://www.portaudio.com/
 
 Downloaded on first use (not redistributed by AudioRefine)
 ---------------------------------------------------------

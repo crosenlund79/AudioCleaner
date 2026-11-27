@@ -1,0 +1,2110 @@
+[
+{
+"mid": "/m/09x0r",
+"name": "Speech"
+},
+{
+"mid": "/m/05zppz",
+"name": "Male speech, man speaking"
+},
+{
+"mid": "/m/02zsn",
+"name": "Female speech, woman speaking"
+},
+{
+"mid": "/m/0ytgt",
+"name": "Child speech, kid speaking"
+},
+{
+"mid": "/m/01h8n0",
+"name": "Conversation"
+},
+{
+"mid": "/m/02qldy",
+"name": "Narration, monologue"
+},
+{
+"mid": "/m/0261r1",
+"name": "Babbling"
+},
+{
+"mid": "/m/0brhx",
+"name": "Speech synthesizer"
+},
+{
+"mid": "/m/07p6fty",
+"name": "Shout"
+},
+{
+"mid": "/m/07q4ntr",
+"name": "Bellow"
+},
+{
+"mid": "/m/07rwj3x",
+"name": "Whoop"
+},
+{
+"mid": "/m/07sr1lc",
+"name": "Yell"
+},
+{
+"mid": "/m/04gy_2",
+"name": "Battle cry"
+},
+{
+"mid": "/t/dd00135",
+"name": "Children shouting"
+},
+{
+"mid": "/m/03qc9zr",
+"name": "Screaming"
+},
+{
+"mid": "/m/02rtxlg",
+"name": "Whispering"
+},
+{
+"mid": "/m/01j3sz",
+"name": "Laughter"
+},
+{
+"mid": "/t/dd00001",
+"name": "Baby laughter"
+},
+{
+"mid": "/m/07r660_",
+"name": "Giggle"
+},
+{
+"mid": "/m/07s04w4",
+"name": "Snicker"
+},
+{
+"mid": "/m/07sq110",
+"name": "Belly laugh"
+},
+{
+"mid": "/m/07rgt08",
+"name": "Chuckle, chortle"
+},
+{
+"mid": "/m/0463cq4",
+"name": "Crying, sobbing"
+},
+{
+"mid": "/t/dd00002",
+"name": "Baby cry, infant cry"
+},
+{
+"mid": "/m/07qz6j3",
+"name": "Whimper"
+},
+{
+"mid": "/m/07qw_06",
+"name": "Wail, moan"
+},
+{
+"mid": "/m/07plz5l",
+"name": "Sigh"
+},
+{
+"mid": "/m/015lz1",
+"name": "Singing"
+},
+{
+"mid": "/m/0l14jd",
+"name": "Choir"
+},
+{
+"mid": "/m/01swy6",
+"name": "Yodeling"
+},
+{
+"mid": "/m/02bk07",
+"name": "Chant"
+},
+{
+"mid": "/m/01c194",
+"name": "Mantra"
+},
+{
+"mid": "/t/dd00003",
+"name": "Male singing"
+},
+{
+"mid": "/t/dd00004",
+"name": "Female singing"
+},
+{
+"mid": "/t/dd00005",
+"name": "Child singing"
+},
+{
+"mid": "/t/dd00006",
+"name": "Synthetic singing"
+},
+{
+"mid": "/m/06bxc",
+"name": "Rapping"
+},
+{
+"mid": "/m/02fxyj",
+"name": "Humming"
+},
+{
+"mid": "/m/07s2xch",
+"name": "Groan"
+},
+{
+"mid": "/m/07r4k75",
+"name": "Grunt"
+},
+{
+"mid": "/m/01w250",
+"name": "Whistling"
+},
+{
+"mid": "/m/0lyf6",
+"name": "Breathing"
+},
+{
+"mid": "/m/07mzm6",
+"name": "Wheeze"
+},
+{
+"mid": "/m/01d3sd",
+"name": "Snoring"
+},
+{
+"mid": "/m/07s0dtb",
+"name": "Gasp"
+},
+{
+"mid": "/m/07pyy8b",
+"name": "Pant"
+},
+{
+"mid": "/m/07q0yl5",
+"name": "Snort"
+},
+{
+"mid": "/m/01b_21",
+"name": "Cough"
+},
+{
+"mid": "/m/0dl9sf8",
+"name": "Throat clearing"
+},
+{
+"mid": "/m/01hsr_",
+"name": "Sneeze"
+},
+{
+"mid": "/m/07ppn3j",
+"name": "Sniff"
+},
+{
+"mid": "/m/06h7j",
+"name": "Run"
+},
+{
+"mid": "/m/07qv_x_",
+"name": "Shuffle"
+},
+{
+"mid": "/m/07pbtc8",
+"name": "Walk, footsteps"
+},
+{
+"mid": "/m/03cczk",
+"name": "Chewing, mastication"
+},
+{
+"mid": "/m/07pdhp0",
+"name": "Biting"
+},
+{
+"mid": "/m/0939n_",
+"name": "Gargling"
+},
+{
+"mid": "/m/01g90h",
+"name": "Stomach rumble"
+},
+{
+"mid": "/m/03q5_w",
+"name": "Burping, eructation"
+},
+{
+"mid": "/m/02p3nc",
+"name": "Hiccup"
+},
+{
+"mid": "/m/02_nn",
+"name": "Fart"
+},
+{
+"mid": "/m/0k65p",
+"name": "Hands"
+},
+{
+"mid": "/m/025_jnm",
+"name": "Finger snapping"
+},
+{
+"mid": "/m/0l15bq",
+"name": "Clapping"
+},
+{
+"mid": "/m/01jg02",
+"name": "Heart sounds, heartbeat"
+},
+{
+"mid": "/m/01jg1z",
+"name": "Heart murmur"
+},
+{
+"mid": "/m/053hz1",
+"name": "Cheering"
+},
+{
+"mid": "/m/028ght",
+"name": "Applause"
+},
+{
+"mid": "/m/07rkbfh",
+"name": "Chatter"
+},
+{
+"mid": "/m/03qtwd",
+"name": "Crowd"
+},
+{
+"mid": "/m/07qfr4h",
+"name": "Hubbub, speech noise, speech babble"
+},
+{
+"mid": "/t/dd00013",
+"name": "Children playing"
+},
+{
+"mid": "/m/0jbk",
+"name": "Animal"
+},
+{
+"mid": "/m/068hy",
+"name": "Domestic animals, pets"
+},
+{
+"mid": "/m/0bt9lr",
+"name": "Dog"
+},
+{
+"mid": "/m/05tny_",
+"name": "Bark"
+},
+{
+"mid": "/m/07r_k2n",
+"name": "Yip"
+},
+{
+"mid": "/m/07qf0zm",
+"name": "Howl"
+},
+{
+"mid": "/m/07rc7d9",
+"name": "Bow-wow"
+},
+{
+"mid": "/m/0ghcn6",
+"name": "Growling"
+},
+{
+"mid": "/t/dd00136",
+"name": "Whimper (dog)"
+},
+{
+"mid": "/m/01yrx",
+"name": "Cat"
+},
+{
+"mid": "/m/02yds9",
+"name": "Purr"
+},
+{
+"mid": "/m/07qrkrw",
+"name": "Meow"
+},
+{
+"mid": "/m/07rjwbb",
+"name": "Hiss"
+},
+{
+"mid": "/m/07r81j2",
+"name": "Caterwaul"
+},
+{
+"mid": "/m/0ch8v",
+"name": "Livestock, farm animals, working animals"
+},
+{
+"mid": "/m/03k3r",
+"name": "Horse"
+},
+{
+"mid": "/m/07rv9rh",
+"name": "Clip-clop"
+},
+{
+"mid": "/m/07q5rw0",
+"name": "Neigh, whinny"
+},
+{
+"mid": "/m/01xq0k1",
+"name": "Cattle, bovinae"
+},
+{
+"mid": "/m/07rpkh9",
+"name": "Moo"
+},
+{
+"mid": "/m/0239kh",
+"name": "Cowbell"
+},
+{
+"mid": "/m/068zj",
+"name": "Pig"
+},
+{
+"mid": "/t/dd00018",
+"name": "Oink"
+},
+{
+"mid": "/m/03fwl",
+"name": "Goat"
+},
+{
+"mid": "/m/07q0h5t",
+"name": "Bleat"
+},
+{
+"mid": "/m/07bgp",
+"name": "Sheep"
+},
+{
+"mid": "/m/025rv6n",
+"name": "Fowl"
+},
+{
+"mid": "/m/09b5t",
+"name": "Chicken, rooster"
+},
+{
+"mid": "/m/07st89h",
+"name": "Cluck"
+},
+{
+"mid": "/m/07qn5dc",
+"name": "Crowing, cock-a-doodle-doo"
+},
+{
+"mid": "/m/01rd7k",
+"name": "Turkey"
+},
+{
+"mid": "/m/07svc2k",
+"name": "Gobble"
+},
+{
+"mid": "/m/09ddx",
+"name": "Duck"
+},
+{
+"mid": "/m/07qdb04",
+"name": "Quack"
+},
+{
+"mid": "/m/0dbvp",
+"name": "Goose"
+},
+{
+"mid": "/m/07qwf61",
+"name": "Honk"
+},
+{
+"mid": "/m/01280g",
+"name": "Wild animals"
+},
+{
+"mid": "/m/0cdnk",
+"name": "Roaring cats (lions, tigers)"
+},
+{
+"mid": "/m/04cvmfc",
+"name": "Roar"
+},
+{
+"mid": "/m/015p6",
+"name": "Bird"
+},
+{
+"mid": "/m/020bb7",
+"name": "Bird vocalization, bird call, bird song"
+},
+{
+"mid": "/m/07pggtn",
+"name": "Chirp, tweet"
+},
+{
+"mid": "/m/07sx8x_",
+"name": "Squawk"
+},
+{
+"mid": "/m/0h0rv",
+"name": "Pigeon, dove"
+},
+{
+"mid": "/m/07r_25d",
+"name": "Coo"
+},
+{
+"mid": "/m/04s8yn",
+"name": "Crow"
+},
+{
+"mid": "/m/07r5c2p",
+"name": "Caw"
+},
+{
+"mid": "/m/09d5_",
+"name": "Owl"
+},
+{
+"mid": "/m/07r_80w",
+"name": "Hoot"
+},
+{
+"mid": "/m/05_wcq",
+"name": "Bird flight, flapping wings"
+},
+{
+"mid": "/m/01z5f",
+"name": "Canidae, dogs, wolves"
+},
+{
+"mid": "/m/06hps",
+"name": "Rodents, rats, mice"
+},
+{
+"mid": "/m/04rmv",
+"name": "Mouse"
+},
+{
+"mid": "/m/07r4gkf",
+"name": "Patter"
+},
+{
+"mid": "/m/03vt0",
+"name": "Insect"
+},
+{
+"mid": "/m/09xqv",
+"name": "Cricket"
+},
+{
+"mid": "/m/09f96",
+"name": "Mosquito"
+},
+{
+"mid": "/m/0h2mp",
+"name": "Fly, housefly"
+},
+{
+"mid": "/m/07pjwq1",
+"name": "Buzz"
+},
+{
+"mid": "/m/01h3n",
+"name": "Bee, wasp, etc."
+},
+{
+"mid": "/m/09ld4",
+"name": "Frog"
+},
+{
+"mid": "/m/07st88b",
+"name": "Croak"
+},
+{
+"mid": "/m/078jl",
+"name": "Snake"
+},
+{
+"mid": "/m/07qn4z3",
+"name": "Rattle"
+},
+{
+"mid": "/m/032n05",
+"name": "Whale vocalization"
+},
+{
+"mid": "/m/04rlf",
+"name": "Music"
+},
+{
+"mid": "/m/04szw",
+"name": "Musical instrument"
+},
+{
+"mid": "/m/0fx80y",
+"name": "Plucked string instrument"
+},
+{
+"mid": "/m/0342h",
+"name": "Guitar"
+},
+{
+"mid": "/m/02sgy",
+"name": "Electric guitar"
+},
+{
+"mid": "/m/018vs",
+"name": "Bass guitar"
+},
+{
+"mid": "/m/042v_gx",
+"name": "Acoustic guitar"
+},
+{
+"mid": "/m/06w87",
+"name": "Steel guitar, slide guitar"
+},
+{
+"mid": "/m/01glhc",
+"name": "Tapping (guitar technique)"
+},
+{
+"mid": "/m/07s0s5r",
+"name": "Strum"
+},
+{
+"mid": "/m/018j2",
+"name": "Banjo"
+},
+{
+"mid": "/m/0jtg0",
+"name": "Sitar"
+},
+{
+"mid": "/m/04rzd",
+"name": "Mandolin"
+},
+{
+"mid": "/m/01bns_",
+"name": "Zither"
+},
+{
+"mid": "/m/07xzm",
+"name": "Ukulele"
+},
+{
+"mid": "/m/05148p4",
+"name": "Keyboard (musical)"
+},
+{
+"mid": "/m/05r5c",
+"name": "Piano"
+},
+{
+"mid": "/m/01s0ps",
+"name": "Electric piano"
+},
+{
+"mid": "/m/013y1f",
+"name": "Organ"
+},
+{
+"mid": "/m/03xq_f",
+"name": "Electronic organ"
+},
+{
+"mid": "/m/03gvt",
+"name": "Hammond organ"
+},
+{
+"mid": "/m/0l14qv",
+"name": "Synthesizer"
+},
+{
+"mid": "/m/01v1d8",
+"name": "Sampler"
+},
+{
+"mid": "/m/03q5t",
+"name": "Harpsichord"
+},
+{
+"mid": "/m/0l14md",
+"name": "Percussion"
+},
+{
+"mid": "/m/02hnl",
+"name": "Drum kit"
+},
+{
+"mid": "/m/0cfdd",
+"name": "Drum machine"
+},
+{
+"mid": "/m/026t6",
+"name": "Drum"
+},
+{
+"mid": "/m/06rvn",
+"name": "Snare drum"
+},
+{
+"mid": "/m/03t3fj",
+"name": "Rimshot"
+},
+{
+"mid": "/m/02k_mr",
+"name": "Drum roll"
+},
+{
+"mid": "/m/0bm02",
+"name": "Bass drum"
+},
+{
+"mid": "/m/011k_j",
+"name": "Timpani"
+},
+{
+"mid": "/m/01p970",
+"name": "Tabla"
+},
+{
+"mid": "/m/01qbl",
+"name": "Cymbal"
+},
+{
+"mid": "/m/03qtq",
+"name": "Hi-hat"
+},
+{
+"mid": "/m/01sm1g",
+"name": "Wood block"
+},
+{
+"mid": "/m/07brj",
+"name": "Tambourine"
+},
+{
+"mid": "/m/05r5wn",
+"name": "Rattle (instrument)"
+},
+{
+"mid": "/m/0xzly",
+"name": "Maraca"
+},
+{
+"mid": "/m/0mbct",
+"name": "Gong"
+},
+{
+"mid": "/m/016622",
+"name": "Tubular bells"
+},
+{
+"mid": "/m/0j45pbj",
+"name": "Mallet percussion"
+},
+{
+"mid": "/m/0dwsp",
+"name": "Marimba, xylophone"
+},
+{
+"mid": "/m/0dwtp",
+"name": "Glockenspiel"
+},
+{
+"mid": "/m/0dwt5",
+"name": "Vibraphone"
+},
+{
+"mid": "/m/0l156b",
+"name": "Steelpan"
+},
+{
+"mid": "/m/05pd6",
+"name": "Orchestra"
+},
+{
+"mid": "/m/01kcd",
+"name": "Brass instrument"
+},
+{
+"mid": "/m/0319l",
+"name": "French horn"
+},
+{
+"mid": "/m/07gql",
+"name": "Trumpet"
+},
+{
+"mid": "/m/07c6l",
+"name": "Trombone"
+},
+{
+"mid": "/m/0l14_3",
+"name": "Bowed string instrument"
+},
+{
+"mid": "/m/02qmj0d",
+"name": "String section"
+},
+{
+"mid": "/m/07y_7",
+"name": "Violin, fiddle"
+},
+{
+"mid": "/m/0d8_n",
+"name": "Pizzicato"
+},
+{
+"mid": "/m/01xqw",
+"name": "Cello"
+},
+{
+"mid": "/m/02fsn",
+"name": "Double bass"
+},
+{
+"mid": "/m/085jw",
+"name": "Wind instrument, woodwind instrument"
+},
+{
+"mid": "/m/0l14j_",
+"name": "Flute"
+},
+{
+"mid": "/m/06ncr",
+"name": "Saxophone"
+},
+{
+"mid": "/m/01wy6",
+"name": "Clarinet"
+},
+{
+"mid": "/m/03m5k",
+"name": "Harp"
+},
+{
+"mid": "/m/0395lw",
+"name": "Bell"
+},
+{
+"mid": "/m/03w41f",
+"name": "Church bell"
+},
+{
+"mid": "/m/027m70_",
+"name": "Jingle bell"
+},
+{
+"mid": "/m/0gy1t2s",
+"name": "Bicycle bell"
+},
+{
+"mid": "/m/07n_g",
+"name": "Tuning fork"
+},
+{
+"mid": "/m/0f8s22",
+"name": "Chime"
+},
+{
+"mid": "/m/026fgl",
+"name": "Wind chime"
+},
+{
+"mid": "/m/0150b9",
+"name": "Change ringing (campanology)"
+},
+{
+"mid": "/m/03qjg",
+"name": "Harmonica"
+},
+{
+"mid": "/m/0mkg",
+"name": "Accordion"
+},
+{
+"mid": "/m/0192l",
+"name": "Bagpipes"
+},
+{
+"mid": "/m/02bxd",
+"name": "Didgeridoo"
+},
+{
+"mid": "/m/0l14l2",
+"name": "Shofar"
+},
+{
+"mid": "/m/07kc_",
+"name": "Theremin"
+},
+{
+"mid": "/m/0l14t7",
+"name": "Singing bowl"
+},
+{
+"mid": "/m/01hgjl",
+"name": "Scratching (performance technique)"
+},
+{
+"mid": "/m/064t9",
+"name": "Pop music"
+},
+{
+"mid": "/m/0glt670",
+"name": "Hip hop music"
+},
+{
+"mid": "/m/02cz_7",
+"name": "Beatboxing"
+},
+{
+"mid": "/m/06by7",
+"name": "Rock music"
+},
+{
+"mid": "/m/03lty",
+"name": "Heavy metal"
+},
+{
+"mid": "/m/05r6t",
+"name": "Punk rock"
+},
+{
+"mid": "/m/0dls3",
+"name": "Grunge"
+},
+{
+"mid": "/m/0dl5d",
+"name": "Progressive rock"
+},
+{
+"mid": "/m/07sbbz2",
+"name": "Rock and roll"
+},
+{
+"mid": "/m/05w3f",
+"name": "Psychedelic rock"
+},
+{
+"mid": "/m/06j6l",
+"name": "Rhythm and blues"
+},
+{
+"mid": "/m/0gywn",
+"name": "Soul music"
+},
+{
+"mid": "/m/06cqb",
+"name": "Reggae"
+},
+{
+"mid": "/m/01lyv",
+"name": "Country"
+},
+{
+"mid": "/m/015y_n",
+"name": "Swing music"
+},
+{
+"mid": "/m/0gg8l",
+"name": "Bluegrass"
+},
+{
+"mid": "/m/02x8m",
+"name": "Funk"
+},
+{
+"mid": "/m/02w4v",
+"name": "Folk music"
+},
+{
+"mid": "/m/06j64v",
+"name": "Middle Eastern music"
+},
+{
+"mid": "/m/03_d0",
+"name": "Jazz"
+},
+{
+"mid": "/m/026z9",
+"name": "Disco"
+},
+{
+"mid": "/m/0ggq0m",
+"name": "Classical music"
+},
+{
+"mid": "/m/05lls",
+"name": "Opera"
+},
+{
+"mid": "/m/02lkt",
+"name": "Electronic music"
+},
+{
+"mid": "/m/03mb9",
+"name": "House music"
+},
+{
+"mid": "/m/07gxw",
+"name": "Techno"
+},
+{
+"mid": "/m/07s72n",
+"name": "Dubstep"
+},
+{
+"mid": "/m/0283d",
+"name": "Drum and bass"
+},
+{
+"mid": "/m/0m0jc",
+"name": "Electronica"
+},
+{
+"mid": "/m/08cyft",
+"name": "Electronic dance music"
+},
+{
+"mid": "/m/0fd3y",
+"name": "Ambient music"
+},
+{
+"mid": "/m/07lnk",
+"name": "Trance music"
+},
+{
+"mid": "/m/0g293",
+"name": "Music of Latin America"
+},
+{
+"mid": "/m/0ln16",
+"name": "Salsa music"
+},
+{
+"mid": "/m/0326g",
+"name": "Flamenco"
+},
+{
+"mid": "/m/0155w",
+"name": "Blues"
+},
+{
+"mid": "/m/05fw6t",
+"name": "Music for children"
+},
+{
+"mid": "/m/02v2lh",
+"name": "New-age music"
+},
+{
+"mid": "/m/0y4f8",
+"name": "Vocal music"
+},
+{
+"mid": "/m/0z9c",
+"name": "A capella"
+},
+{
+"mid": "/m/0164x2",
+"name": "Music of Africa"
+},
+{
+"mid": "/m/0145m",
+"name": "Afrobeat"
+},
+{
+"mid": "/m/02mscn",
+"name": "Christian music"
+},
+{
+"mid": "/m/016cjb",
+"name": "Gospel music"
+},
+{
+"mid": "/m/028sqc",
+"name": "Music of Asia"
+},
+{
+"mid": "/m/015vgc",
+"name": "Carnatic music"
+},
+{
+"mid": "/m/0dq0md",
+"name": "Music of Bollywood"
+},
+{
+"mid": "/m/06rqw",
+"name": "Ska"
+},
+{
+"mid": "/m/02p0sh1",
+"name": "Traditional music"
+},
+{
+"mid": "/m/05rwpb",
+"name": "Independent music"
+},
+{
+"mid": "/m/074ft",
+"name": "Song"
+},
+{
+"mid": "/m/025td0t",
+"name": "Background music"
+},
+{
+"mid": "/m/02cjck",
+"name": "Theme music"
+},
+{
+"mid": "/m/03r5q_",
+"name": "Jingle (music)"
+},
+{
+"mid": "/m/0l14gg",
+"name": "Soundtrack music"
+},
+{
+"mid": "/m/07pkxdp",
+"name": "Lullaby"
+},
+{
+"mid": "/m/01z7dr",
+"name": "Video game music"
+},
+{
+"mid": "/m/0140xf",
+"name": "Christmas music"
+},
+{
+"mid": "/m/0ggx5q",
+"name": "Dance music"
+},
+{
+"mid": "/m/04wptg",
+"name": "Wedding music"
+},
+{
+"mid": "/t/dd00031",
+"name": "Happy music"
+},
+{
+"mid": "/t/dd00032",
+"name": "Funny music"
+},
+{
+"mid": "/t/dd00033",
+"name": "Sad music"
+},
+{
+"mid": "/t/dd00034",
+"name": "Tender music"
+},
+{
+"mid": "/t/dd00035",
+"name": "Exciting music"
+},
+{
+"mid": "/t/dd00036",
+"name": "Angry music"
+},
+{
+"mid": "/t/dd00037",
+"name": "Scary music"
+},
+{
+"mid": "/m/03m9d0z",
+"name": "Wind"
+},
+{
+"mid": "/m/09t49",
+"name": "Rustling leaves"
+},
+{
+"mid": "/t/dd00092",
+"name": "Wind noise (microphone)"
+},
+{
+"mid": "/m/0jb2l",
+"name": "Thunderstorm"
+},
+{
+"mid": "/m/0ngt1",
+"name": "Thunder"
+},
+{
+"mid": "/m/0838f",
+"name": "Water"
+},
+{
+"mid": "/m/06mb1",
+"name": "Rain"
+},
+{
+"mid": "/m/07r10fb",
+"name": "Raindrop"
+},
+{
+"mid": "/t/dd00038",
+"name": "Rain on surface"
+},
+{
+"mid": "/m/0j6m2",
+"name": "Stream"
+},
+{
+"mid": "/m/0j2kx",
+"name": "Waterfall"
+},
+{
+"mid": "/m/05kq4",
+"name": "Ocean"
+},
+{
+"mid": "/m/034srq",
+"name": "Waves, surf"
+},
+{
+"mid": "/m/06wzb",
+"name": "Steam"
+},
+{
+"mid": "/m/07swgks",
+"name": "Gurgling"
+},
+{
+"mid": "/m/02_41",
+"name": "Fire"
+},
+{
+"mid": "/m/07pzfmf",
+"name": "Crackle"
+},
+{
+"mid": "/m/07yv9",
+"name": "Vehicle"
+},
+{
+"mid": "/m/019jd",
+"name": "Boat, Water vehicle"
+},
+{
+"mid": "/m/0hsrw",
+"name": "Sailboat, sailing ship"
+},
+{
+"mid": "/m/056ks2",
+"name": "Rowboat, canoe, kayak"
+},
+{
+"mid": "/m/02rlv9",
+"name": "Motorboat, speedboat"
+},
+{
+"mid": "/m/06q74",
+"name": "Ship"
+},
+{
+"mid": "/m/012f08",
+"name": "Motor vehicle (road)"
+},
+{
+"mid": "/m/0k4j",
+"name": "Car"
+},
+{
+"mid": "/m/0912c9",
+"name": "Vehicle horn, car horn, honking"
+},
+{
+"mid": "/m/07qv_d5",
+"name": "Toot"
+},
+{
+"mid": "/m/02mfyn",
+"name": "Car alarm"
+},
+{
+"mid": "/m/04gxbd",
+"name": "Power windows, electric windows"
+},
+{
+"mid": "/m/07rknqz",
+"name": "Skidding"
+},
+{
+"mid": "/m/0h9mv",
+"name": "Tire squeal"
+},
+{
+"mid": "/t/dd00134",
+"name": "Car passing by"
+},
+{
+"mid": "/m/0ltv",
+"name": "Race car, auto racing"
+},
+{
+"mid": "/m/07r04",
+"name": "Truck"
+},
+{
+"mid": "/m/0gvgw0",
+"name": "Air brake"
+},
+{
+"mid": "/m/05x_td",
+"name": "Air horn, truck horn"
+},
+{
+"mid": "/m/02rhddq",
+"name": "Reversing beeps"
+},
+{
+"mid": "/m/03cl9h",
+"name": "Ice cream truck, ice cream van"
+},
+{
+"mid": "/m/01bjv",
+"name": "Bus"
+},
+{
+"mid": "/m/03j1ly",
+"name": "Emergency vehicle"
+},
+{
+"mid": "/m/04qvtq",
+"name": "Police car (siren)"
+},
+{
+"mid": "/m/012n7d",
+"name": "Ambulance (siren)"
+},
+{
+"mid": "/m/012ndj",
+"name": "Fire engine, fire truck (siren)"
+},
+{
+"mid": "/m/04_sv",
+"name": "Motorcycle"
+},
+{
+"mid": "/m/0btp2",
+"name": "Traffic noise, roadway noise"
+},
+{
+"mid": "/m/06d_3",
+"name": "Rail transport"
+},
+{
+"mid": "/m/07jdr",
+"name": "Train"
+},
+{
+"mid": "/m/04zmvq",
+"name": "Train whistle"
+},
+{
+"mid": "/m/0284vy3",
+"name": "Train horn"
+},
+{
+"mid": "/m/01g50p",
+"name": "Railroad car, train wagon"
+},
+{
+"mid": "/t/dd00048",
+"name": "Train wheels squealing"
+},
+{
+"mid": "/m/0195fx",
+"name": "Subway, metro, underground"
+},
+{
+"mid": "/m/0k5j",
+"name": "Aircraft"
+},
+{
+"mid": "/m/014yck",
+"name": "Aircraft engine"
+},
+{
+"mid": "/m/04229",
+"name": "Jet engine"
+},
+{
+"mid": "/m/02l6bg",
+"name": "Propeller, airscrew"
+},
+{
+"mid": "/m/09ct_",
+"name": "Helicopter"
+},
+{
+"mid": "/m/0cmf2",
+"name": "Fixed-wing aircraft, airplane"
+},
+{
+"mid": "/m/0199g",
+"name": "Bicycle"
+},
+{
+"mid": "/m/06_fw",
+"name": "Skateboard"
+},
+{
+"mid": "/m/02mk9",
+"name": "Engine"
+},
+{
+"mid": "/t/dd00065",
+"name": "Light engine (high frequency)"
+},
+{
+"mid": "/m/08j51y",
+"name": "Dental drill, dentist's drill"
+},
+{
+"mid": "/m/01yg9g",
+"name": "Lawn mower"
+},
+{
+"mid": "/m/01j4z9",
+"name": "Chainsaw"
+},
+{
+"mid": "/t/dd00066",
+"name": "Medium engine (mid frequency)"
+},
+{
+"mid": "/t/dd00067",
+"name": "Heavy engine (low frequency)"
+},
+{
+"mid": "/m/01h82_",
+"name": "Engine knocking"
+},
+{
+"mid": "/t/dd00130",
+"name": "Engine starting"
+},
+{
+"mid": "/m/07pb8fc",
+"name": "Idling"
+},
+{
+"mid": "/m/07q2z82",
+"name": "Accelerating, revving, vroom"
+},
+{
+"mid": "/m/02dgv",
+"name": "Door"
+},
+{
+"mid": "/m/03wwcy",
+"name": "Doorbell"
+},
+{
+"mid": "/m/07r67yg",
+"name": "Ding-dong"
+},
+{
+"mid": "/m/02y_763",
+"name": "Sliding door"
+},
+{
+"mid": "/m/07rjzl8",
+"name": "Slam"
+},
+{
+"mid": "/m/07r4wb8",
+"name": "Knock"
+},
+{
+"mid": "/m/07qcpgn",
+"name": "Tap"
+},
+{
+"mid": "/m/07q6cd_",
+"name": "Squeak"
+},
+{
+"mid": "/m/0642b4",
+"name": "Cupboard open or close"
+},
+{
+"mid": "/m/0fqfqc",
+"name": "Drawer open or close"
+},
+{
+"mid": "/m/04brg2",
+"name": "Dishes, pots, and pans"
+},
+{
+"mid": "/m/023pjk",
+"name": "Cutlery, silverware"
+},
+{
+"mid": "/m/07pn_8q",
+"name": "Chopping (food)"
+},
+{
+"mid": "/m/0dxrf",
+"name": "Frying (food)"
+},
+{
+"mid": "/m/0fx9l",
+"name": "Microwave oven"
+},
+{
+"mid": "/m/02pjr4",
+"name": "Blender"
+},
+{
+"mid": "/m/02jz0l",
+"name": "Water tap, faucet"
+},
+{
+"mid": "/m/0130jx",
+"name": "Sink (filling or washing)"
+},
+{
+"mid": "/m/03dnzn",
+"name": "Bathtub (filling or washing)"
+},
+{
+"mid": "/m/03wvsk",
+"name": "Hair dryer"
+},
+{
+"mid": "/m/01jt3m",
+"name": "Toilet flush"
+},
+{
+"mid": "/m/012xff",
+"name": "Toothbrush"
+},
+{
+"mid": "/m/04fgwm",
+"name": "Electric toothbrush"
+},
+{
+"mid": "/m/0d31p",
+"name": "Vacuum cleaner"
+},
+{
+"mid": "/m/01s0vc",
+"name": "Zipper (clothing)"
+},
+{
+"mid": "/m/03v3yw",
+"name": "Keys jangling"
+},
+{
+"mid": "/m/0242l",
+"name": "Coin (dropping)"
+},
+{
+"mid": "/m/01lsmm",
+"name": "Scissors"
+},
+{
+"mid": "/m/02g901",
+"name": "Electric shaver, electric razor"
+},
+{
+"mid": "/m/05rj2",
+"name": "Shuffling cards"
+},
+{
+"mid": "/m/0316dw",
+"name": "Typing"
+},
+{
+"mid": "/m/0c2wf",
+"name": "Typewriter"
+},
+{
+"mid": "/m/01m2v",
+"name": "Computer keyboard"
+},
+{
+"mid": "/m/081rb",
+"name": "Writing"
+},
+{
+"mid": "/m/07pp_mv",
+"name": "Alarm"
+},
+{
+"mid": "/m/07cx4",
+"name": "Telephone"
+},
+{
+"mid": "/m/07pp8cl",
+"name": "Telephone bell ringing"
+},
+{
+"mid": "/m/01hnzm",
+"name": "Ringtone"
+},
+{
+"mid": "/m/02c8p",
+"name": "Telephone dialing, DTMF"
+},
+{
+"mid": "/m/015jpf",
+"name": "Dial tone"
+},
+{
+"mid": "/m/01z47d",
+"name": "Busy signal"
+},
+{
+"mid": "/m/046dlr",
+"name": "Alarm clock"
+},
+{
+"mid": "/m/03kmc9",
+"name": "Siren"
+},
+{
+"mid": "/m/0dgbq",
+"name": "Civil defense siren"
+},
+{
+"mid": "/m/030rvx",
+"name": "Buzzer"
+},
+{
+"mid": "/m/01y3hg",
+"name": "Smoke detector, smoke alarm"
+},
+{
+"mid": "/m/0c3f7m",
+"name": "Fire alarm"
+},
+{
+"mid": "/m/04fq5q",
+"name": "Foghorn"
+},
+{
+"mid": "/m/0l156k",
+"name": "Whistle"
+},
+{
+"mid": "/m/06hck5",
+"name": "Steam whistle"
+},
+{
+"mid": "/t/dd00077",
+"name": "Mechanisms"
+},
+{
+"mid": "/m/02bm9n",
+"name": "Ratchet, pawl"
+},
+{
+"mid": "/m/01x3z",
+"name": "Clock"
+},
+{
+"mid": "/m/07qjznt",
+"name": "Tick"
+},
+{
+"mid": "/m/07qjznl",
+"name": "Tick-tock"
+},
+{
+"mid": "/m/0l7xg",
+"name": "Gears"
+},
+{
+"mid": "/m/05zc1",
+"name": "Pulleys"
+},
+{
+"mid": "/m/0llzx",
+"name": "Sewing machine"
+},
+{
+"mid": "/m/02x984l",
+"name": "Mechanical fan"
+},
+{
+"mid": "/m/025wky1",
+"name": "Air conditioning"
+},
+{
+"mid": "/m/024dl",
+"name": "Cash register"
+},
+{
+"mid": "/m/01m4t",
+"name": "Printer"
+},
+{
+"mid": "/m/0dv5r",
+"name": "Camera"
+},
+{
+"mid": "/m/07bjf",
+"name": "Single-lens reflex camera"
+},
+{
+"mid": "/m/07k1x",
+"name": "Tools"
+},
+{
+"mid": "/m/03l9g",
+"name": "Hammer"
+},
+{
+"mid": "/m/03p19w",
+"name": "Jackhammer"
+},
+{
+"mid": "/m/01b82r",
+"name": "Sawing"
+},
+{
+"mid": "/m/02p01q",
+"name": "Filing (rasp)"
+},
+{
+"mid": "/m/023vsd",
+"name": "Sanding"
+},
+{
+"mid": "/m/0_ksk",
+"name": "Power tool"
+},
+{
+"mid": "/m/01d380",
+"name": "Drill"
+},
+{
+"mid": "/m/014zdl",
+"name": "Explosion"
+},
+{
+"mid": "/m/032s66",
+"name": "Gunshot, gunfire"
+},
+{
+"mid": "/m/04zjc",
+"name": "Machine gun"
+},
+{
+"mid": "/m/02z32qm",
+"name": "Fusillade"
+},
+{
+"mid": "/m/0_1c",
+"name": "Artillery fire"
+},
+{
+"mid": "/m/073cg4",
+"name": "Cap gun"
+},
+{
+"mid": "/m/0g6b5",
+"name": "Fireworks"
+},
+{
+"mid": "/g/122z_qxw",
+"name": "Firecracker"
+},
+{
+"mid": "/m/07qsvvw",
+"name": "Burst, pop"
+},
+{
+"mid": "/m/07pxg6y",
+"name": "Eruption"
+},
+{
+"mid": "/m/07qqyl4",
+"name": "Boom"
+},
+{
+"mid": "/m/083vt",
+"name": "Wood"
+},
+{
+"mid": "/m/07pczhz",
+"name": "Chop"
+},
+{
+"mid": "/m/07pl1bw",
+"name": "Splinter"
+},
+{
+"mid": "/m/07qs1cx",
+"name": "Crack"
+},
+{
+"mid": "/m/039jq",
+"name": "Glass"
+},
+{
+"mid": "/m/07q7njn",
+"name": "Chink, clink"
+},
+{
+"mid": "/m/07rn7sz",
+"name": "Shatter"
+},
+{
+"mid": "/m/04k94",
+"name": "Liquid"
+},
+{
+"mid": "/m/07rrlb6",
+"name": "Splash, splatter"
+},
+{
+"mid": "/m/07p6mqd",
+"name": "Slosh"
+},
+{
+"mid": "/m/07qlwh6",
+"name": "Squish"
+},
+{
+"mid": "/m/07r5v4s",
+"name": "Drip"
+},
+{
+"mid": "/m/07prgkl",
+"name": "Pour"
+},
+{
+"mid": "/m/07pqc89",
+"name": "Trickle, dribble"
+},
+{
+"mid": "/t/dd00088",
+"name": "Gush"
+},
+{
+"mid": "/m/07p7b8y",
+"name": "Fill (with liquid)"
+},
+{
+"mid": "/m/07qlf79",
+"name": "Spray"
+},
+{
+"mid": "/m/07ptzwd",
+"name": "Pump (liquid)"
+},
+{
+"mid": "/m/07ptfmf",
+"name": "Stir"
+},
+{
+"mid": "/m/0dv3j",
+"name": "Boiling"
+},
+{
+"mid": "/m/0790c",
+"name": "Sonar"
+},
+{
+"mid": "/m/0dl83",
+"name": "Arrow"
+},
+{
+"mid": "/m/07rqsjt",
+"name": "Whoosh, swoosh, swish"
+},
+{
+"mid": "/m/07qnq_y",
+"name": "Thump, thud"
+},
+{
+"mid": "/m/07rrh0c",
+"name": "Thunk"
+},
+{
+"mid": "/m/0b_fwt",
+"name": "Electronic tuner"
+},
+{
+"mid": "/m/02rr_",
+"name": "Effects unit"
+},
+{
+"mid": "/m/07m2kt",
+"name": "Chorus effect"
+},
+{
+"mid": "/m/018w8",
+"name": "Basketball bounce"
+},
+{
+"mid": "/m/07pws3f",
+"name": "Bang"
+},
+{
+"mid": "/m/07ryjzk",
+"name": "Slap, smack"
+},
+{
+"mid": "/m/07rdhzs",
+"name": "Whack, thwack"
+},
+{
+"mid": "/m/07pjjrj",
+"name": "Smash, crash"
+},
+{
+"mid": "/m/07pc8lb",
+"name": "Breaking"
+},
+{
+"mid": "/m/07pqn27",
+"name": "Bouncing"
+},
+{
+"mid": "/m/07rbp7_",
+"name": "Whip"
+},
+{
+"mid": "/m/07pyf11",
+"name": "Flap"
+},
+{
+"mid": "/m/07qb_dv",
+"name": "Scratch"
+},
+{
+"mid": "/m/07qv4k0",
+"name": "Scrape"
+},
+{
+"mid": "/m/07pdjhy",
+"name": "Rub"
+},
+{
+"mid": "/m/07s8j8t",
+"name": "Roll"
+},
+{
+"mid": "/m/07plct2",
+"name": "Crushing"
+},
+{
+"mid": "/t/dd00112",
+"name": "Crumpling, crinkling"
+},
+{
+"mid": "/m/07qcx4z",
+"name": "Tearing"
+},
+{
+"mid": "/m/02fs_r",
+"name": "Beep, bleep"
+},
+{
+"mid": "/m/07qwdck",
+"name": "Ping"
+},
+{
+"mid": "/m/07phxs1",
+"name": "Ding"
+},
+{
+"mid": "/m/07rv4dm",
+"name": "Clang"
+},
+{
+"mid": "/m/07s02z0",
+"name": "Squeal"
+},
+{
+"mid": "/m/07qh7jl",
+"name": "Creak"
+},
+{
+"mid": "/m/07qwyj0",
+"name": "Rustle"
+},
+{
+"mid": "/m/07s34ls",
+"name": "Whir"
+},
+{
+"mid": "/m/07qmpdm",
+"name": "Clatter"
+},
+{
+"mid": "/m/07p9k1k",
+"name": "Sizzle"
+},
+{
+"mid": "/m/07qc9xj",
+"name": "Clicking"
+},
+{
+"mid": "/m/07rwm0c",
+"name": "Clickety-clack"
+},
+{
+"mid": "/m/07phhsh",
+"name": "Rumble"
+},
+{
+"mid": "/m/07qyrcz",
+"name": "Plop"
+},
+{
+"mid": "/m/07qfgpx",
+"name": "Jingle, tinkle"
+},
+{
+"mid": "/m/07rcgpl",
+"name": "Hum"
+},
+{
+"mid": "/m/07p78v5",
+"name": "Zing"
+},
+{
+"mid": "/t/dd00121",
+"name": "Boing"
+},
+{
+"mid": "/m/07s12q4",
+"name": "Crunch"
+},
+{
+"mid": "/m/028v0c",
+"name": "Silence"
+},
+{
+"mid": "/m/01v_m0",
+"name": "Sine wave"
+},
+{
+"mid": "/m/0b9m1",
+"name": "Harmonic"
+},
+{
+"mid": "/m/0hdsk",
+"name": "Chirp tone"
+},
+{
+"mid": "/m/0c1dj",
+"name": "Sound effect"
+},
+{
+"mid": "/m/07pt_g0",
+"name": "Pulse"
+},
+{
+"mid": "/t/dd00125",
+"name": "Inside, small room"
+},
+{
+"mid": "/t/dd00126",
+"name": "Inside, large room or hall"
+},
+{
+"mid": "/t/dd00127",
+"name": "Inside, public space"
+},
+{
+"mid": "/t/dd00128",
+"name": "Outside, urban or manmade"
+},
+{
+"mid": "/t/dd00129",
+"name": "Outside, rural or natural"
+},
+{
+"mid": "/m/01b9nn",
+"name": "Reverberation"
+},
+{
+"mid": "/m/01jnbd",
+"name": "Echo"
+},
+{
+"mid": "/m/096m7z",
+"name": "Noise"
+},
+{
+"mid": "/m/06_y0by",
+"name": "Environmental noise"
+},
+{
+"mid": "/m/07rgkc5",
+"name": "Static"
+},
+{
+"mid": "/m/06xkwv",
+"name": "Mains hum"
+},
+{
+"mid": "/m/0g12c5",
+"name": "Distortion"
+},
+{
+"mid": "/m/08p9q4",
+"name": "Sidetone"
+},
+{
+"mid": "/m/07szfh9",
+"name": "Cacophony"
+},
+{
+"mid": "/m/0chx_",
+"name": "White noise"
+},
+{
+"mid": "/m/0cj0r",
+"name": "Pink noise"
+},
+{
+"mid": "/m/07p_0gm",
+"name": "Throbbing"
+},
+{
+"mid": "/m/01jwx6",
+"name": "Vibration"
+},
+{
+"mid": "/m/07c52",
+"name": "Television"
+},
+{
+"mid": "/m/06bz3",
+"name": "Radio"
+},
+{
+"mid": "/m/07hvw1",
+"name": "Field recording"
+}
+]

@@ -538,6 +538,10 @@ def process_folder(root: Path, emit: Callable[[dict], None], cancel: CancelToken
         log.info("Enhancement helper: %s", enhance.arfilter_version())
         emit({"type": "progress", "stage": "prepare", "label": "Checking the folder", "detail": "", "fraction": 0.0,
               "elapsed": 0.0, "eta": None})
+        from .sound.store import analysis_busy
+        if analysis_busy(root):
+            return Outcome("failed", "The sounds in this folder are being analysed right now. Process the folder "
+                                     "when the sound analysis has finished. Nothing was changed.")
         lock.acquire()
         for note in hourbatch.recover(root):
             log.info("Recovery: %s", note)

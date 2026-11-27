@@ -220,6 +220,25 @@ finished hour is a recovery checkpoint.
 Folders created by AudioRefine 1.0 (batch folders `refined/<YYYY-MM-DD_HH-MM-SS>`) are left
 untouched and are not merged into the 1.1 structure.
 
+## 10a. Sound analysis and Sound Explorer (version 1.2)
+
+Full rationale, measurements and limitations: **ACOUSTIC_ANALYSIS.md**. In short:
+
+| Decision | Choice | Why |
+|---|---|---|
+| Separate operation | `AudioRefineEngine analyze <folder>` / *Analyze sounds*; never part of *Process and transcribe* | independent, repeatable, no re-transcription; can run before or after transcription |
+| Input | the **original** recordings (folder + `processed/**`), decoded read-only to 32 kHz mono | the enhanced audio removes exactly the sounds of interest |
+| Model | EfficientAT `mn10_as` (MobileNetV3, 4.9 M parameters, AudioSet mAP 0.471, MIT), exported to ONNX (19.5 MB), bundled | best accuracy per CPU cost among the candidates measured; no PyTorch in the package; no download; offline |
+| Time scales | 10 s context windows (natural audio, every 5 s) × 2 s localisation windows (centred in 10 s of silence, every 1 s), combined by geometric mean; music/TV/games from context only | the model saturates on inputs < 4 s; context gives accuracy, short windows give ±1 s timing |
+| Vocabulary | curated categories made of AudioSet classes; per-category thresholds tuned on AudioSet *evaluation* clips (never seen in training) with a false-positive budget on event-free speech, meeting and quiet-room recordings; categories that fail precision/recall targets are disabled | fewer, more reliable detections |
+| Events | hysteresis, per-category merging and minimum evidence; one event per occurrence; High/Moderate; scores kept only as internal diagnostics | readable results, no window spam |
+| Playback context | detections inside music/TV stretches are marked *during music/TV audio* and never rated High | loudspeaker sounds are not room events |
+| Activities | rule-based *Possible cooking* / *Possible washing up* from ≥ 2 different supporting sounds within minutes | suggestions only, never facts |
+| Hours | same hour keys, recording-time rules and DST-safe splitting as the transcription; an event belongs to the hour it starts in (listed once, with its full span) | consistent with the transcripts; no loss or duplication at boundaries |
+| Storage | `analysis/` (hour JSON + TXT, day TXT, master TXT/JSON, per-recording cache by SHA-256, source index, reviews) | separate from `refined/`; survives archiving; incremental; versioned by model+vocabulary fingerprint (other versions are re-analysed, never mixed) |
+| Playback | PyAV decode from the event position + PortAudio (`sounddevice`) | exact offsets on the analysis timeline (same decoder), all input formats, no QtMultimedia/Addons (≈ 100 MB) needed |
+| Locking | an analysis refuses to run while the folder is being transcribed, and vice versa | the transcription moves originals |
+
 ## 11. Packaging and distribution
 
 * PyInstaller 6.22 one-folder build (`packaging/audiorefine.spec`), no UPX (fewer antivirus
@@ -245,3 +264,9 @@ are fetched from NVIDIA's PyPI packages on the user's machine. DeepFilterNet (MI
 model weights are compiled into `arfilter.exe`. Silero VAD is MIT. No component restricts
 commercial use. FLEURS test audio in the repository is CC BY 4.0 with attribution in
 `tests/data/README.md`.
+
+Version 1.2 adds the EfficientAT `mn10_as` weights (MIT, © 2022 Florian Schmid), converted to
+ONNX without changing the weights, the AudioSet class list (CC BY 4.0, Google), `sounddevice`
+(MIT) and PortAudio (MIT-style). The sound clips in `tests/data/sounds` are CC0 or public domain
+(sources listed there). AudioSet and ESC-50 audio was used for evaluation only and is not
+included in the repository or the application.

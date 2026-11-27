@@ -1,0 +1,1652 @@
+{
+ "version": "2026-11-27.1",
+ "media_context": 0.3,
+ "media_ids": [
+  "music",
+  "tv",
+  "radio",
+  "videogame"
+ ],
+ "categories": [
+  {
+   "id": "crying",
+   "display": "Crying / sobbing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Crying, sobbing",
+    "Baby cry, infant cry"
+   ],
+   "moderate": 0.294,
+   "high": 0.577,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "baby_cry",
+   "display": "Baby crying",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Baby cry, infant cry"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "included in 'Crying / sobbing' (one sound must not be reported twice); recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "whimper",
+   "display": "Whimpering",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Whimper"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "laughter",
+   "display": "Laughter",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Laughter",
+    "Baby laughter",
+    "Giggle",
+    "Snicker",
+    "Belly laugh",
+    "Chuckle, chortle"
+   ],
+   "moderate": 0.156,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "sigh",
+   "display": "Sighing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Sigh"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "cough",
+   "display": "Coughing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Cough"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "sneeze",
+   "display": "Sneezing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Sneeze"
+   ],
+   "moderate": 0.381,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "snoring",
+   "display": "Snoring",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Snoring"
+   ],
+   "moderate": 0.173,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "shout",
+   "display": "Shouting",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Shout",
+    "Yell",
+    "Children shouting"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "scream",
+   "display": "Screaming",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Screaming"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "whisper",
+   "display": "Whispering",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Whispering"
+   ],
+   "moderate": 0.173,
+   "high": 0.754,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.60 < 0.62"
+  },
+  {
+   "id": "singing",
+   "display": "Singing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Singing",
+    "Male singing",
+    "Female singing",
+    "Child singing",
+    "Choir"
+   ],
+   "moderate": 0.128,
+   "high": 0.35,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "humming",
+   "display": "Humming (voice)",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Humming"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.43 < 0.62; recall 0.19 < 0.25"
+  },
+  {
+   "id": "whistling",
+   "display": "Whistling",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Whistling"
+   ],
+   "moderate": 0.185,
+   "high": 0.359,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "groan",
+   "display": "Groaning",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Groan",
+    "Grunt"
+   ],
+   "moderate": 0.434,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.11 < 0.25"
+  },
+  {
+   "id": "breathing",
+   "display": "Heavy breathing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Breathing",
+    "Gasp",
+    "Pant",
+    "Wheeze"
+   ],
+   "moderate": 0.154,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.25 < 0.25"
+  },
+  {
+   "id": "throat",
+   "display": "Throat clearing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Throat clearing"
+   ],
+   "moderate": 0.377,
+   "high": 0.603,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.55 < 0.62"
+  },
+  {
+   "id": "sniff",
+   "display": "Sniffing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Sniff"
+   ],
+   "moderate": 0.12,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25"
+  },
+  {
+   "id": "babbling",
+   "display": "Baby babbling",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Babbling"
+   ],
+   "moderate": 0.151,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.57 < 0.62"
+  },
+  {
+   "id": "children",
+   "display": "Children playing",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Children playing"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.62 < 0.62"
+  },
+  {
+   "id": "clapping",
+   "display": "Clapping / applause",
+   "group": "Human sounds",
+   "kind": "impact",
+   "labels": [
+    "Clapping",
+    "Applause"
+   ],
+   "moderate": 0.13,
+   "high": 0.708,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "footsteps",
+   "display": "Footsteps",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Walk, footsteps"
+   ],
+   "moderate": 0.159,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.58 < 0.62"
+  },
+  {
+   "id": "running",
+   "display": "Running (footsteps)",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Run"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "chewing",
+   "display": "Chewing / eating",
+   "group": "Human sounds",
+   "kind": "vocal",
+   "labels": [
+    "Chewing, mastication"
+   ],
+   "moderate": 0.12,
+   "high": 0.311,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "precision 0.62 < 0.62"
+  },
+  {
+   "id": "knock",
+   "display": "Knocking",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Knock"
+   ],
+   "moderate": 0.21,
+   "high": 0.31,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "tap",
+   "display": "Tapping",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Tap"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "bang",
+   "display": "Banging / impact",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Bang",
+    "Thump, thud",
+    "Whack, thwack",
+    "Slap, smack"
+   ],
+   "moderate": 0.253,
+   "high": 0.478,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.19 < 0.25"
+  },
+  {
+   "id": "slam",
+   "display": "Door slamming",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Slam"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "door",
+   "display": "Door opening / closing",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Door",
+    "Sliding door"
+   ],
+   "moderate": 0.596,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.50 < 0.62; recall 0.05 < 0.25"
+  },
+  {
+   "id": "cupboard",
+   "display": "Cupboard / drawer",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Cupboard open or close",
+    "Drawer open or close"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.18 < 0.25"
+  },
+  {
+   "id": "doorbell",
+   "display": "Doorbell",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Doorbell",
+    "Ding-dong"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "glass_break",
+   "display": "Breaking glass",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Shatter",
+    "Breaking"
+   ],
+   "moderate": 0.232,
+   "high": 0.7,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "glass",
+   "display": "Glass clinking",
+   "group": "Kitchen",
+   "kind": "impact",
+   "labels": [
+    "Glass",
+    "Chink, clink"
+   ],
+   "moderate": 0.286,
+   "high": 0.387,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.57 < 0.62; recall 0.08 < 0.25"
+  },
+  {
+   "id": "crash",
+   "display": "Crash / smash",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Smash, crash"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.61 < 0.62"
+  },
+  {
+   "id": "scrape",
+   "display": "Scraping",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Scrape"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "clatter",
+   "display": "Clattering",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Clatter"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "squeak",
+   "display": "Squeaking / creaking",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Squeak",
+    "Creak"
+   ],
+   "moderate": 0.12,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.23 < 0.25"
+  },
+  {
+   "id": "keys",
+   "display": "Keys jangling",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Keys jangling"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "coin",
+   "display": "Coins dropping",
+   "group": "Impacts and movement",
+   "kind": "impact",
+   "labels": [
+    "Coin (dropping)"
+   ],
+   "moderate": 0.225,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "hammer",
+   "display": "Hammering",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Hammer"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "hairdryer",
+   "display": "Hairdryer",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Hair dryer"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "shaver",
+   "display": "Electric shaver",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Electric shaver, electric razor"
+   ],
+   "moderate": 0.199,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "precision 0.50 < 0.62"
+  },
+  {
+   "id": "toothbrush",
+   "display": "Toothbrush",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Toothbrush",
+    "Electric toothbrush"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.15 < 0.25"
+  },
+  {
+   "id": "tap_water",
+   "display": "Running or pouring water",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Water tap, faucet",
+    "Sink (filling or washing)",
+    "Bathtub (filling or washing)",
+    "Fill (with liquid)",
+    "Pour"
+   ],
+   "moderate": 0.121,
+   "high": 0.523,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "precision 0.61 < 0.62"
+  },
+  {
+   "id": "toilet",
+   "display": "Toilet flushing",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Toilet flush"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "splash",
+   "display": "Water splashing",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Splash, splatter"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "precision 0.60 < 0.62"
+  },
+  {
+   "id": "pour",
+   "display": "Pouring / filling",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Pour",
+    "Fill (with liquid)"
+   ],
+   "moderate": 0.121,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "included in 'Running or pouring water'; recall 0.12 < 0.25"
+  },
+  {
+   "id": "drip",
+   "display": "Dripping",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Drip"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "water",
+   "display": "Water (general)",
+   "group": "Personal care and bathroom",
+   "kind": "sustained",
+   "labels": [
+    "Water"
+   ],
+   "moderate": 0.126,
+   "high": 0.372,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "too generic (any water sound) to be useful; precision 0.51 < 0.62"
+  },
+  {
+   "id": "chopping",
+   "display": "Chopping (food)",
+   "group": "Kitchen",
+   "kind": "impact",
+   "labels": [
+    "Chopping (food)"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.19 < 0.25"
+  },
+  {
+   "id": "frying",
+   "display": "Frying / sizzling",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Frying (food)",
+    "Sizzle"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "dishes",
+   "display": "Dishes / cutlery",
+   "group": "Kitchen",
+   "kind": "impact",
+   "labels": [
+    "Dishes, pots, and pans",
+    "Cutlery, silverware"
+   ],
+   "moderate": 0.378,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.57 < 0.62; recall 0.13 < 0.25"
+  },
+  {
+   "id": "cutlery",
+   "display": "Cutlery",
+   "group": "Kitchen",
+   "kind": "impact",
+   "labels": [
+    "Cutlery, silverware"
+   ],
+   "moderate": 0.215,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "included in 'Dishes / cutlery'"
+  },
+  {
+   "id": "microwave",
+   "display": "Microwave oven",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Microwave oven"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "blender",
+   "display": "Blender",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Blender"
+   ],
+   "moderate": 0.12,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "boiling",
+   "display": "Boiling",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Boiling"
+   ],
+   "moderate": 0.128,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.19 < 0.25"
+  },
+  {
+   "id": "crumple",
+   "display": "Packaging / crinkling",
+   "group": "Kitchen",
+   "kind": "sustained",
+   "labels": [
+    "Crumpling, crinkling",
+    "Tearing"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "zipper",
+   "display": "Zipper",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Zipper (clothing)"
+   ],
+   "moderate": 0.38,
+   "high": 0.48,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "scissors",
+   "display": "Scissors",
+   "group": "Household",
+   "kind": "impact",
+   "labels": [
+    "Scissors"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.19 < 0.25"
+  },
+  {
+   "id": "vacuum",
+   "display": "Vacuum cleaner",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Vacuum cleaner"
+   ],
+   "moderate": 0.12,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "fan",
+   "display": "Fan / air conditioning",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Mechanical fan",
+    "Air conditioning"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.04 < 0.25"
+  },
+  {
+   "id": "hum",
+   "display": "Mechanical / electrical hum",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Hum",
+    "Mains hum"
+   ],
+   "moderate": 0.12,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "constant background hum of fridges, mains and fans – would mark almost every hour; precision 0.50 < 0.62; recall 0.20 < 0.25"
+  },
+  {
+   "id": "sewing",
+   "display": "Sewing machine",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Sewing machine"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.16 < 0.25"
+  },
+  {
+   "id": "printer",
+   "display": "Printer",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Printer"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "clock",
+   "display": "Clock ticking",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Clock",
+    "Tick",
+    "Tick-tock"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "power_tool",
+   "display": "Power tool / drill",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Power tool",
+    "Drill"
+   ],
+   "moderate": 0.2,
+   "high": 0.422,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "precision 0.57 < 0.62"
+  },
+  {
+   "id": "sawing",
+   "display": "Sawing",
+   "group": "Household",
+   "kind": "sustained",
+   "labels": [
+    "Sawing"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.22 < 0.25"
+  },
+  {
+   "id": "music",
+   "display": "Music",
+   "group": "Entertainment and electronics",
+   "kind": "media",
+   "labels": [
+    "Music"
+   ],
+   "moderate": 0.29,
+   "high": 0.745,
+   "min_windows": 6,
+   "merge_gap": 20.0,
+   "enabled": true
+  },
+  {
+   "id": "tv",
+   "display": "Television",
+   "group": "Entertainment and electronics",
+   "kind": "media",
+   "labels": [
+    "Television"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 6,
+   "merge_gap": 20.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "radio",
+   "display": "Radio",
+   "group": "Entertainment and electronics",
+   "kind": "media",
+   "labels": [
+    "Radio"
+   ],
+   "moderate": 0.314,
+   "high": 0.45,
+   "min_windows": 6,
+   "merge_gap": 20.0,
+   "enabled": true
+  },
+  {
+   "id": "videogame",
+   "display": "Video game music",
+   "group": "Entertainment and electronics",
+   "kind": "media",
+   "labels": [
+    "Video game music"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 6,
+   "merge_gap": 20.0,
+   "enabled": true
+  },
+  {
+   "id": "sfx",
+   "display": "Electronic sound effects",
+   "group": "Entertainment and electronics",
+   "kind": "media",
+   "labels": [
+    "Sound effect"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 6,
+   "merge_gap": 20.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "typing",
+   "display": "Keyboard typing",
+   "group": "Entertainment and electronics",
+   "kind": "impact",
+   "labels": [
+    "Typing",
+    "Computer keyboard",
+    "Typewriter"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "clicking",
+   "display": "Clicking",
+   "group": "Entertainment and electronics",
+   "kind": "impact",
+   "labels": [
+    "Clicking"
+   ],
+   "moderate": 0.76,
+   "high": 0.86,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "recall 0.05 < 0.25"
+  },
+  {
+   "id": "phone",
+   "display": "Phone ringing",
+   "group": "Entertainment and electronics",
+   "kind": "sustained",
+   "labels": [
+    "Telephone",
+    "Telephone bell ringing",
+    "Ringtone"
+   ],
+   "moderate": 0.12,
+   "high": 0.326,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "beep",
+   "display": "Beeps",
+   "group": "Entertainment and electronics",
+   "kind": "impact",
+   "labels": [
+    "Beep, bleep"
+   ],
+   "moderate": 0.55,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "ding",
+   "display": "Chime / ding",
+   "group": "Entertainment and electronics",
+   "kind": "impact",
+   "labels": [
+    "Ding",
+    "Chime"
+   ],
+   "moderate": 0.166,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": false,
+   "note": "precision 0.51 < 0.62"
+  },
+  {
+   "id": "alarm",
+   "display": "Alarm",
+   "group": "Entertainment and electronics",
+   "kind": "sustained",
+   "labels": [
+    "Alarm",
+    "Alarm clock",
+    "Smoke detector, smoke alarm",
+    "Fire alarm",
+    "Buzzer"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "siren",
+   "display": "Siren",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Siren",
+    "Police car (siren)",
+    "Ambulance (siren)",
+    "Fire engine, fire truck (siren)",
+    "Civil defense siren"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "dog",
+   "display": "Dog barking",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Bark",
+    "Yip",
+    "Bow-wow",
+    "Dog"
+   ],
+   "moderate": 0.225,
+   "high": 0.7,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "dog_growl",
+   "display": "Dog growling",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Growling"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "dog_whimper",
+   "display": "Dog whining / whimpering",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Whimper (dog)"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "howl",
+   "display": "Howling",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Howl"
+   ],
+   "moderate": 0.142,
+   "high": 0.741,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "cat",
+   "display": "Cat meowing",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Meow",
+    "Cat",
+    "Caterwaul"
+   ],
+   "moderate": 0.279,
+   "high": 0.434,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "purr",
+   "display": "Cat purring",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Purr"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "bird",
+   "display": "Birds",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Bird",
+    "Bird vocalization, bird call, bird song",
+    "Chirp, tweet",
+    "Squawk",
+    "Crow",
+    "Caw",
+    "Pigeon, dove"
+   ],
+   "moderate": 0.203,
+   "high": 0.628,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "rooster",
+   "display": "Rooster / chickens",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Chicken, rooster",
+    "Crowing, cock-a-doodle-doo"
+   ],
+   "moderate": 0.18,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "insect",
+   "display": "Insects",
+   "group": "Animals",
+   "kind": "sustained",
+   "labels": [
+    "Insect",
+    "Cricket",
+    "Mosquito",
+    "Fly, housefly"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "frog",
+   "display": "Frogs",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Frog"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "horse",
+   "display": "Horse",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Horse"
+   ],
+   "moderate": 0.199,
+   "high": 0.491,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "cattle",
+   "display": "Cattle",
+   "group": "Animals",
+   "kind": "vocal",
+   "labels": [
+    "Cattle, bovinae"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": true
+  },
+  {
+   "id": "car",
+   "display": "Car",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Car",
+    "Car passing by",
+    "Motor vehicle (road)"
+   ],
+   "moderate": 0.198,
+   "high": 0.344,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "horn",
+   "display": "Car horn",
+   "group": "Outdoor and transport",
+   "kind": "impact",
+   "labels": [
+    "Vehicle horn, car horn, honking"
+   ],
+   "moderate": 0.551,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "motorcycle",
+   "display": "Motorcycle",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Motorcycle"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "engine",
+   "display": "Engine",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Engine",
+    "Idling",
+    "Accelerating, revving, vroom"
+   ],
+   "moderate": 0.208,
+   "high": 0.333,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "traffic",
+   "display": "Traffic",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Traffic noise, roadway noise"
+   ],
+   "moderate": 0.95,
+   "high": 0.99,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": false,
+   "note": "recall 0.00 < 0.25; no usable threshold"
+  },
+  {
+   "id": "train",
+   "display": "Train",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Train",
+    "Train whistle",
+    "Train horn",
+    "Railroad car, train wagon"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "aircraft",
+   "display": "Aircraft",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Aircraft",
+    "Aircraft engine",
+    "Fixed-wing aircraft, airplane",
+    "Jet engine"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "helicopter",
+   "display": "Helicopter",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Helicopter"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "rain",
+   "display": "Rain",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Rain",
+    "Raindrop",
+    "Rain on surface"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "wind",
+   "display": "Wind",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Wind",
+    "Wind noise (microphone)"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "thunder",
+   "display": "Thunder",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Thunder",
+    "Thunderstorm"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "lawnmower",
+   "display": "Lawn mower",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Lawn mower"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "chainsaw",
+   "display": "Chainsaw",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Chainsaw"
+   ],
+   "moderate": 0.41,
+   "high": 0.98,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "church_bell",
+   "display": "Church bells",
+   "group": "Outdoor and transport",
+   "kind": "sustained",
+   "labels": [
+    "Church bell"
+   ],
+   "moderate": 0.127,
+   "high": 0.369,
+   "min_windows": 3,
+   "merge_gap": 10.0,
+   "enabled": true
+  },
+  {
+   "id": "fireworks",
+   "display": "Fireworks",
+   "group": "Outdoor and transport",
+   "kind": "impact",
+   "labels": [
+    "Fireworks",
+    "Firecracker"
+   ],
+   "moderate": 0.12,
+   "high": 0.3,
+   "min_windows": 1,
+   "merge_gap": 5.0,
+   "enabled": true
+  },
+  {
+   "id": "speech",
+   "display": "Speech",
+   "group": "Speech",
+   "kind": "vocal",
+   "labels": [
+    "Speech",
+    "Male speech, man speaking",
+    "Female speech, woman speaking",
+    "Child speech, kid speaking",
+    "Conversation",
+    "Narration, monologue"
+   ],
+   "moderate": 0.88,
+   "high": 0.98,
+   "min_windows": 1,
+   "merge_gap": 8.0,
+   "enabled": false,
+   "note": "speech is covered by the transcription; recall 0.10 < 0.25"
+  }
+ ],
+ "note": "Curated AudioSet categories; thresholds on the combined two-scale score. Tuned with tools/sound/tune.py on AudioSet evaluation clips (never seen in training) with a false-positive budget on event-free speech and quiet-room recordings. Categories with enabled=false are kept for transparency (reason in 'note')."
+}

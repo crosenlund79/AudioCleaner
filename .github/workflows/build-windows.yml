@@ -21,7 +21,7 @@ jobs:
     env:
       PYTHONUTF8: "1"
       PYTHONIOENCODING: utf-8
-      APP_VERSION: "1.1.0"
+      APP_VERSION: "1.2.0"
     defaults:
       run:
         shell: pwsh
@@ -148,6 +148,37 @@ jobs:
       - name: Verify end-to-end results
         run: python tools/ci/verify_e2e.py "$env:RUNNER_TEMP\Audio dumps"
 
+      - name: Prepare sound-analysis test folder (CC0 / public-domain sounds)
+        run: python tools/ci/make_sound_folder.py "$env:RUNNER_TEMP\Sound dumps"
+
+      - name: Packaged sound analysis (Analyze sounds) of both folders
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Sound dumps" > "$env:RUNNER_TEMP\sound-events.jsonl"
+          $rc = $LASTEXITCODE
+          "Engine exit code $rc after $($sw.Elapsed)"
+          Get-Content "$env:RUNNER_TEMP\sound-events.jsonl" | Where-Object { $_ -notmatch '"type": "progress"' }
+          if ($rc -ne 0) { exit 1 }
+          # the transcribed folder: originals are now in 'processed'; also produces the annotated transcript
+          dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Audio dumps" > "$env:RUNNER_TEMP\sound-events-2.jsonl"
+          $rc = $LASTEXITCODE
+          Get-Content "$env:RUNNER_TEMP\sound-events-2.jsonl" | Where-Object { $_ -notmatch '"type": "progress"' }
+          if ($rc -ne 0) { exit 1 }
+          # a second run must find nothing new
+          dist/AudioRefine/AudioRefineEngine.exe --json analyze "$env:RUNNER_TEMP\Sound dumps" | Select-String '"type": "result"'
+
+      - name: Verify sound analysis results
+        run: python tools/ci/verify_sound_e2e.py "$env:RUNNER_TEMP\Sound dumps" "$env:RUNNER_TEMP\Audio dumps"
+
+      - name: Packaged Sound Explorer smoke test (native Windows platform, screenshot, playback)
+        run: |
+          $guiArgs = @('--screenshot', "`"$env:RUNNER_TEMP\gui-sound.png`"", '--folder', "`"$env:RUNNER_TEMP\Sound dumps`"",
+                       '--explorer-screenshot', "`"$env:RUNNER_TEMP\explorer.png`"")
+          $p = Start-Process -FilePath dist/AudioRefine/AudioRefine.exe -ArgumentList $guiArgs -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); exit 1 }
+          "GUI exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0 -or -not (Test-Path "$env:RUNNER_TEMP\explorer.png")) { exit 1 }
+
       - name: Collect verification material
         if: always()
         run: |
@@ -156,6 +187,9 @@ jobs:
           Copy-Item "$env:RUNNER_TEMP\gui.png" verification/ -ErrorAction SilentlyContinue
           Copy-Item "$env:RUNNER_TEMP\e2e-events.jsonl" verification/ -ErrorAction SilentlyContinue
           if (Test-Path "$env:RUNNER_TEMP\Audio dumps\refined") { Copy-Item -Recurse "$env:RUNNER_TEMP\Audio dumps\refined" verification/e2e-refined }
+          if (Test-Path "$env:RUNNER_TEMP\Audio dumps\analysis") { Copy-Item -Recurse "$env:RUNNER_TEMP\Audio dumps\analysis" verification/e2e-analysis }
+          if (Test-Path "$env:RUNNER_TEMP\Sound dumps\analysis") { Copy-Item -Recurse "$env:RUNNER_TEMP\Sound dumps\analysis" verification/sound-analysis }
+          Copy-Item "$env:RUNNER_TEMP\gui-sound.png", "$env:RUNNER_TEMP\explorer.png", "$env:RUNNER_TEMP\sound-events.jsonl", "$env:RUNNER_TEMP\sound-events-2.jsonl" verification/ -ErrorAction SilentlyContinue
           Copy-Item -Recurse "$env:LOCALAPPDATA\AudioRefine\logs" verification/logs -ErrorAction SilentlyContinue
 
       - name: Upload portable application

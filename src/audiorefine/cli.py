@@ -2,7 +2,8 @@
 
 Commands
   scan <folder>                 list recordings, order and durations (JSON)
-  process <folder>              process the folder
+  process <folder>              process the folder (enhance + transcribe)
+  analyze <folder>              analyse sounds in the original recordings (independent of process)
   status                        installed components, hardware (JSON)
   download                      download the speech model (and GPU runtime when useful)
   selftest                      check that all bundled components load
@@ -158,6 +159,19 @@ def cmd_process(args, emit, log_file: Path) -> int:
     return {"success": 0, "cancelled": 2, "archive_incomplete": 3}.get(out.status, 1)
 
 
+def cmd_analyze(args, emit, log_file: Path) -> int:
+    from .progress import CancelToken
+    from .sound.runner import analyze_folder
+
+    token = CancelToken()
+    if args.json:
+        _stdin_cancel_watcher(token)
+    out = analyze_folder(Path(args.folder), emit, token, log_file=log_file)
+    emit({"type": "result", "status": out.status, "message": out.message, "warnings": out.warnings,
+          "hours_done": out.hours_done, "report": out.report, "log_file": str(log_file)})
+    return {"success": 0, "cancelled": 2}.get(out.status, 1)
+
+
 def cmd_selftest(args) -> int:
     results = {}
     try:
@@ -181,7 +195,25 @@ def cmd_selftest(args) -> int:
         results["silero_vad"] = "ok"
     except Exception as e:
         results["silero_vad"] = f"ERROR {e}"
-    ok = not any(str(v).startswith(("ERROR", "unavailable")) for v in results.values())
+    try:
+        import numpy as np
+
+        from .sound.model import SoundModel, model_file_ok
+
+        if not model_file_ok():
+            raise RuntimeError("sound model file missing or damaged")
+        sm = SoundModel(threads=1)
+        s = sm.scores(sm.frontend.logmel(np.zeros(32000 * 2, np.float32))[None, :, :200])
+        results["sound_model"] = f"ok ({s.shape[1]} classes)"
+    except Exception as e:
+        results["sound_model"] = f"ERROR {e}"
+    try:
+        import sounddevice
+
+        results["sounddevice"] = sounddevice.__version__
+    except Exception as e:
+        results["sounddevice"] = f"unavailable ({e})"
+    ok = not any(str(v).startswith("ERROR") for k, v in results.items())
     _out({"type": "selftest", "ok": ok, "version": __version__, "components": results})
     return 0 if ok else 1
 
@@ -194,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("scan"); p.add_argument("folder")
     p = sub.add_parser("process"); p.add_argument("folder"); p.add_argument("--cpu", action="store_true")
     p.add_argument("--model-dir", default=None)
+    p = sub.add_parser("analyze"); p.add_argument("folder")
     sub.add_parser("status")
     p = sub.add_parser("download"); p.add_argument("--gpu", action="store_true")
     sub.add_parser("selftest")
@@ -221,6 +254,11 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_download(args, emit)
         if args.cmd == "process":
             rc = cmd_process(args, emit, log_file)
+            if not args.json:
+                print()
+            return rc
+        if args.cmd == "analyze":
+            rc = cmd_analyze(args, emit, log_file)
             if not args.json:
                 print()
             return rc
