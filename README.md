@@ -141,8 +141,9 @@ Ja, det kan jeg godt forstå.
 `Transcript_Day_Complete.txt` contains all finished hours of the day under hour headings;
 `Transcript_Master_Complete.txt` contains all finished days and hours under date and hour
 headings, with a status line at the top: **in progress**, **interrupted** (process the folder
-again to continue) or **complete**. Both are rebuilt from the hour records after every finished
-hour – nothing is transcribed twice.
+again to continue) or **complete**. Its header also gives the start of the earliest recorded
+audio (*First recording*) and the end of the latest (*Last recording*). Both are rebuilt from the
+hour records after every finished hour – nothing is transcribed twice.
 
 ---
 

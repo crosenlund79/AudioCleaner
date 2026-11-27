@@ -14,13 +14,13 @@ Test environments:
 | Area | Status | Evidence |
 |---|---|---|
 | Automated test suite (120 tests) on Linux | Verified | §2 |
-| Same suite on Windows (GitHub Actions) | Verified – 112/112 passed in run #6, re-run on every push | §2 |
+| Same suite on Windows (GitHub Actions) | Verified – run #7: 119 passed, 1 skipped (the DST test needs `time.tzset`, which Windows lacks); re-run on every push | §2 |
 | Portable Windows build (PyInstaller) builds; packaged self-test | Verified | §3 |
 | Packaged desktop window starts on Windows and lists a folder | Verified (automated screenshot, native Windows platform) | §3 |
 | Packaged first-run download of the 3.1 GB model, SHA-256 verified | Verified on Windows | §3 |
 | Resuming an interrupted download | Verified (Linux, HTTP Range through redirects) | §2 |
-| Packaged end-to-end run on Windows, Whisper large-v3, real Danish + English speech, 12 min, crossing a 10-minute boundary | Verified | §3 |
-| Multi-hour processing (2 h, two files, packaged engine) | Verified (Linux) | §5 |
+| Packaged end-to-end run on Windows, Whisper large-v3, real Danish + English speech: 6 recordings over 2 days and 5 clock hours, one across 09:00, one across a 10-minute boundary, one without a recording time | Verified (run #7) | §3 |
+| Multi-hour processing (2 h, two files, packaged engine) | Verified (Linux, version 1.0 pipeline) | §5 |
 | Enhancement vs. transcription accuracy (original / conservative / neural) | Verified with WER, large-v3 | §4.2 |
 | Intelligibility effect of the enhancement | Partly verified (objective ESTOI only) | §4.3 |
 | Listening tests by people | **Unverified** – not possible in this environment | – |
@@ -52,7 +52,7 @@ Test environments:
 | Repeated processing without new recordings: nothing changes; a copy of a processed recording is not processed again | Verified | `test_repeat_without_new_recordings_and_duplicate_copy` |
 | Original not archived until all its parts are finished; archived by its start hour; never overwritten | Verified | cancel/kill tests (crossing recording stays until 09-00 is finished), `test_archive_never_overwrites` |
 | Completed hours usable while later hours are processed | Verified | window test (files present and master button enabled during the run) |
-| Windows end-to-end of the packaged application in the hourly layout | see §3 | GitHub Actions |
+| Windows end-to-end of the packaged application in the hourly layout | Verified – run #7, all 50 checks passed | §3 |
 | Very large collections (hundreds of hours) | Partly verified – design (manifest-based regeneration, per-recording caches) and the 2-hour test; not run at that scale | §5 |
 
 ## 2. Automated tests
@@ -74,7 +74,8 @@ Test environments:
 Results:
 
 * Linux: 120 passed (≈ 10 minutes; the 2-hour stress test of §5 is run separately).
-* Windows (GitHub Actions run #6): 112 passed, 0 failed, 0 skipped.
+* Windows (GitHub Actions run #7, commit `316d031`): 119 passed, 1 skipped (`test_daylight_saving_transitions`
+  switches the process time zone with `time.tzset`, which does not exist on Windows), 0 failed.
 
 ## 3. Windows build and packaged end-to-end verification (GitHub Actions)
 
@@ -86,32 +87,50 @@ Each push runs `.github/workflows/build-windows.yml` on `windows-latest`:
    (all native components load: arfilter, NumPy, soundfile, PyAV, CTranslate2, faster-whisper,
    ONNX Runtime, Silero VAD).
 4. Start the packaged `AudioRefine.exe` on the native Windows platform, let it scan the test
-   folder and save a screenshot (the window shows 3 recordings in natural order with durations
-   and formats, the damaged `broken.wma` in red, and the "cannot be read" warning).
-5. Packaged first-run download of Whisper large-v3 (3.09 GB, verified; 11–16 s on GitHub's
-   network) – cached afterwards.
-6. Packaged end-to-end run of the engine on a folder with: Danish FLEURS speech (AAC `.m4a`),
-   English FLEURS speech (stereo `.mp3`), a 10.5-minute FLAC in which Danish speech crosses the
-   10:00 boundary of the joined recording, a damaged `.wma` and an unrelated `notes.txt`.
-7. Automatic verification (`tools/ci/verify_e2e.py`) and upload of the ZIP and of the
-   verification material (screenshot, logs, outputs).
+   folder and save a screenshot.
+5. Packaged first-run download of Whisper large-v3 (3.09 GB, SHA-256 verified) – cached
+   afterwards.
+6. Packaged end-to-end run of the engine (`AudioRefineEngine.exe --json process`) on a folder
+   built by `tools/ci/make_e2e_folder.py` from real FLEURS speech:
 
-Results of the latest verified run (#6, commit `c88f917`; all checks passed):
+   | File | Content | Expected hour(s) |
+   |---|---|---|
+   | `20251125_080400.m4a` | Danish, AAC | 2025-11-25 08-00 |
+   | `20251125_083000.mp3` | English, stereo MP3, incl. one utterance at ≈ −65 dBFS | 08-00 |
+   | `20251125_085826.flac` | 2½ min; Danish speech from 08:59:26 to 09:00:34 | split into 08-00 and 09-00 |
+   | `20251125_100000.flac` | 12 min of room noise, Danish speech across 10:10:00 | 10-00: `Audio_001` (10:00) + `Audio_002` |
+   | `20251126_071200.wav` | English, next day | 2025-11-26 07-00 |
+   | `Optagelse uden tid.m4a` | no time in name or metadata; file date 14:32:40 | ≈ 14-00 (estimated) |
+   | `broken.wma`, `notes.txt` | damaged audio, unrelated file | left untouched |
+
+7. Automatic verification (`tools/ci/verify_e2e.py`) and upload of the ZIP and of the
+   verification material (screenshot, logs, all outputs).
+
+Results of run #7 (commit `316d031`, version 1.1.0; all checks passed):
 
 | Check | Result |
 |---|---|
-| Test suite on Windows | 112 passed, 0 failed, 0 skipped |
-| Packaged window starts (native Windows platform) and lists the folder | pass (screenshot in the verification artifact) |
-| One batch folder, no leftover staging folder, batch state `complete` | pass |
-| Order `Recording 1.m4a`, `Recording 2.mp3`, `Recording 10.flac` (natural) | pass |
-| Originals archived with identical SHA-256; damaged and unrelated files untouched | pass |
-| `Audio_001.flac` exactly 28 800 000 samples (10:00.000); total samples = decoded samples (35 449 152) | pass |
-| `Audio_002.txt` on the continuous timeline; `Audio_002.srt` relative to its file | pass |
-| WER Danish (AAC) | **7.4 %** |
-| WER English (stereo MP3, incl. one utterance at ≈ −65 dBFS) | **2.1 %** |
-| WER Danish across the 10:00 boundary | **9.8 %** – the sentence crossing 10:00 is complete and split as "… metafor for eksotiske fjerne egne." in `Audio_002.txt` |
-| 10 minutes of room noise without speech | no text produced (no hallucination) |
-| Processing time (12:19 of audio, 2:15 of speech, 4 vCPU) | 2 min 54 s: transcription 142 s (1.06× speech duration), enhancement 21 s, everything else < 10 s |
+| Test suite on Windows | 119 passed, 1 skipped (DST test, see §2), 0 failed |
+| Packaged window (native Windows platform) | lists the 6 recordings in recording order with *Recorded* time (`≈2025-11-26 14:32` for the estimated one), hour notes (`hours 08:00–10:00` for the crossing recording), the damaged file in red, "6 new recordings · 5 hours on 2 days to process" and the estimated-time warning |
+| Hour folders | exactly `2025-11-25/08-00`, `09-00`, `10-00`, `2025-11-26/07-00`, `14-00` – no empty hours |
+| Per hour | manifest `complete`, every `Audio_NNN.flac` 48 kHz with the recorded sample count, `.txt` + `.srt` present, samples per hour = sum of its segments, `Transcript_Hour_Complete.txt` present; no staging folders left |
+| Hour boundary 09:00 | the 2:30 recording is split at exactly 09:00:00 (08-00 gets its first 1:34, 09-00 `Audio_001` is 2 688 000 samples = 0:56); the sentence crossing 09:00 appears once, split as "… til en metafor …" / "… for eksotiske fjerne egne." |
+| 10-minute segmentation | 10-00: `Audio_001` = 28 800 000 samples (10:00.000), `Audio_002` = the remaining 2:00 |
+| Day transcripts | present for both dates |
+| Archive | each original in `processed/<date>/<HH-00>` of its **start** hour (the 08:58 recording in 08-00, after 09-00 was finished), SHA-256 identical; `broken.wma` and `notes.txt` untouched |
+| Master transcript | `Status: COMPLETE`; dates and hours in order 25/08, 25/09, 25/10, 26/07, 26/14; no duplicated entry; all entries chronological; the estimated recording marked `≈2025-11-26 14:32:18` |
+| WER Danish 08:04 (AAC) | **7.4 %** |
+| WER English 08:30 (incl. the −65 dBFS utterance) | **2.1 %** |
+| WER Danish across 09:00 | **9.8 %** |
+| WER Danish across the 10-minute file boundary | **12.3 %** |
+| WER English next day 07:12 | **2.1 %** |
+| Processing time (17:23 of audio, ≈ 5 min of speech, 4 vCPU, CPU int8) | 9 min 26 s: transcription 476 s (≈ 1.5 × the speech timeline; includes the extra context around 09:00), enhancement 70 s, everything else < 5 s |
+
+The full master transcript of run #7 is in the job log and in the `verification-7` artifact.
+
+Version 1.0 results (run #6, commit `c88f917`, one continuous batch): 112/112 tests on Windows;
+WER Danish 7.4 %, English 2.1 %, Danish across the 10:00 boundary 9.8 %; 10 minutes of room
+noise produced no text.
 
 Defects found and fixed through runs #1–#5 (see git history):
 
@@ -284,7 +303,9 @@ reference unless stated):
 
 ## 5. Multi-hour test
 
-Packaged engine (Linux build), folder with `Part 1.m4a` (70 min AAC) and `Part 2.mp3`
+Run with the version 1.0 pipeline (one continuous batch; the 1.1 hour-by-hour code reuses the
+same decoding, enhancement, segmentation and recognition stages). Packaged engine (Linux build),
+folder with `Part 1.m4a` (70 min AAC) and `Part 2.mp3`
 (50 min MP3), Danish and English speech scattered through room noise; whisper-tiny model
 (the large model would have taken several hours on this VM), while other experiments loaded
 the same 4-CPU machine.
@@ -302,7 +323,7 @@ the same 4-CPU machine.
 
 | | Figure |
 |---|---|
-| Whisper large-v3 int8 CPU, 4 vCPU | 0.8–1.7 × the speech duration (1.06× in CI run #6) |
+| Whisper large-v3 int8 CPU, 4 vCPU | 0.8–1.7 × the speech duration (1.06× in CI run #6; ≈ 1.5 × the VAD speech timeline in run #7, where each recording part is transcribed separately and the part after 09:00 is re-read with 30 s of context) |
 | Whisper large-v3-turbo int8 CPU, 4 vCPU | ≈ 0.4–0.6 × the speech duration |
 | Model RAM (large-v3 int8) | ≈ 3.3 GB resident |
 | DeepFilterNet3 (arfilter), per core | real-time factor 0.16 (1 h of audio ≈ 10 CPU-minutes, parallel over cores) |
@@ -318,3 +339,16 @@ the same 4-CPU machine.
 * Results on run-to-run and machine-to-machine basis are not bit-identical (int8 CPU kernels
   differ between Intel and AMD); word choices can differ slightly.
 * GPU acceleration, human listening quality and conversational Danish remain to be verified.
+* Version 1.1: recordings whose times overlap (two devices recording at once) are placed one
+  after the other in the hour, ordered by start time – not mixed or aligned.
+* Version 1.1: a recording without any recording time is placed by its file dates (marked ≈);
+  if those dates are wrong (e.g. the file was copied without keeping them), it lands in the
+  wrong hour. The window and all transcripts mark such times with ≈ so this is visible; the
+  recording is identified by its content (SHA-256), so renaming it afterwards does not move it.
+* Version 1.1: output folders written by version 1.0 (`refined\Batch_…`) are left as they are
+  and are not merged into the hourly layout or the master transcript.
+* Version 1.1: the daylight-saving tests run on Linux only; on Windows the same code uses
+  Windows' own time-zone rules and is not separately tested across a DST change.
+* Version 1.1: largest test folder 2 days / 5 hours (CI) and 2 hours of continuous audio (§5, run with the
+  version 1.0 pipeline);
+  collections of hundreds of hours were not processed in this environment.
