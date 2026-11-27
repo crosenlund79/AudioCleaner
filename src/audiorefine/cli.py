@@ -63,6 +63,11 @@ def cmd_scan(args) -> int:
                 log.info("Removed a stale lock file")
             for name in batch.cleanup_stale_staging(root):
                 log.info("Removed incomplete output of an interrupted run: %s", name)
+            if not batch.folder_busy(root):
+                from . import hourbatch
+
+                for note in hourbatch.recover(root):
+                    log.info("Recovery: %s", note)
         except OSError as e:
             log.warning("Cleanup skipped: %s", e)
     res = scan_folder(root)
@@ -148,7 +153,8 @@ def cmd_process(args, emit, log_file: Path) -> int:
         emit({"type": "result", "status": "model_missing", "message": "The speech recognition model is not installed."})
         return 4
     emit({"type": "result", "status": out.status, "message": out.message, "batch": out.batch,
-          "refined_dir": out.refined_dir, "warnings": out.warnings, "log_file": str(log_file)})
+          "refined_dir": out.refined_dir, "warnings": out.warnings, "log_file": str(log_file),
+          "master": out.master, "hours_done": out.hours_done})
     return {"success": 0, "cancelled": 2, "archive_incomplete": 3}.get(out.status, 1)
 
 

@@ -99,8 +99,14 @@ def test_scan_top_level_only_and_filters(tmp_path):
     for sub in ("processed", "refined", "other"):
         (root / sub).mkdir()
         write_audio(root / sub / "old.wav", tone(1.0, 16000), 16000)
+    # no time in the names: recording time is estimated as modification time minus duration;
+    # give all three the same estimated start so the natural-name tie-break decides the order
+    base = 1_700_000_000
+    for n, d in (("Recording2.wav", 1.0), ("Recording10.wav", 2.0), ("Recording1.flac", 1.5)):
+        os.utime(root / n, (base + d, base + d))
     res = scan_folder(root)
     assert [s.name for s in res.sources] == ["Recording1.flac", "Recording2.wav", "Recording10.wav"]
+    assert res.plan is not None and res.plan.summary()["hours_to_process"] == 1
     assert [u.name for u in res.unreadable] == ["broken.mp3"]
     assert res.other_files == 2
     assert abs(res.total_duration - 4.5) < 0.05

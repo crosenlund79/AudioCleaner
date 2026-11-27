@@ -92,18 +92,25 @@ def _run_arfilter(args: list[str], src: Path, start: int, end: int, gain: float,
 
 
 def run_filter_chain(src: Path, dst: Path, plan: EnhancementPlan, workdir: Path, workers: int,
-                     progress: Callable[[float], None] | None = None, cancel: Callable[[], None] | None = None) -> None:
-    """Run arfilter over ``src`` in parallel chunks; ``dst`` gets exactly raw_length(src) samples."""
-    total = raw_length(src)
+                     progress: Callable[[float], None] | None = None, cancel: Callable[[], None] | None = None,
+                     start: int = 0, end: int | None = None) -> None:
+    """Run arfilter over ``src[start:end]`` in parallel chunks; ``dst`` gets exactly end-start samples.
+
+    Warm-up audio before ``start`` (up to PREROLL_S) is taken from the source itself, so a part of a
+    recording that begins at an hour boundary is processed with settled filter/network state.
+    """
+    src_total = raw_length(src)
+    end = src_total if end is None else min(end, src_total)
+    total = max(0, end - start)
     gain = 10 ** (plan.pre_gain_db / 20)
     args = plan.arfilter_args()
     chunk = int(CHUNK_S * MASTER_SR)
     pre = int(PREROLL_S * MASTER_SR)
-    bounds = [(s, min(total, s + chunk)) for s in range(0, total, chunk)] or [(0, 0)]
+    bounds = [(s, min(end, s + chunk)) for s in range(start, end, chunk)] or [(start, start)]
     jobs = []
     for k, (s, e) in enumerate(bounds):
         in_s = max(0, s - pre)
-        in_e = min(total, e + XFADE) if k < len(bounds) - 1 else e
+        in_e = min(end, e + XFADE) if k < len(bounds) - 1 else e
         jobs.append((k, s, e, in_s, in_e, workdir / f"chunk_{k:05d}.f32"))
     done = [0]
     lock = threading.Lock()
@@ -276,6 +283,31 @@ def apply_gains(src: Path, gains_db: np.ndarray, out: RawWriter, fade_in: bool =
             np.clip(y, -1.0, 1.0, out=y)
         out.write(y.astype(np.float32))
     return clipped
+
+
+def enhance_range(decoded: Path, start: int, end: int, plan: EnhancementPlan, speech_prob_frames: np.ndarray,
+                  workdir: Path, out: RawWriter, workers: int, progress: Callable[[float], None] | None = None,
+                  cancel: Callable[[], None] | None = None) -> dict:
+    """Enhance one part of a decoded recording (one hour's piece) and append it to ``out``.
+
+    ``speech_prob_frames`` covers the whole recording (10 ms frames); the leveller sees the frames
+    of this part. 5 ms fades are applied at both ends of the part (they are recording/hour edges).
+    """
+    filtered = workdir / f"{decoded.stem}_{start}_filtered.f32"
+    run_filter_chain(decoded, filtered, plan, workdir, workers,
+                     progress=(lambda f: progress(0.85 * f)) if progress else None, cancel=cancel,
+                     start=start, end=end)
+    ms, pk = frame_stats(filtered)
+    f0 = start // FRAME
+    sp = speech_prob_frames[f0:f0 + ms.size]
+    if sp.size < ms.size:
+        sp = np.pad(sp, (0, ms.size - sp.size))
+    gains, rep = leveller_gains(ms, pk, sp)
+    clipped = apply_gains(filtered, gains, out, fade_in=True, fade_out=True, cancel=cancel)
+    os.remove(filtered)
+    if progress:
+        progress(1.0)
+    return {"leveller": rep.__dict__, "safety_clipped_samples": clipped}
 
 
 def enhance_source(decoded: Path, plan: EnhancementPlan, speech_prob_frames: np.ndarray, workdir: Path,

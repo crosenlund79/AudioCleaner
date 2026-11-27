@@ -27,6 +27,33 @@ def fmt_hms(s: float | None) -> str:
     return f"{s // 3600:02d}:{s % 3600 // 60:02d}:{s % 60:02d}"
 
 
+def fmt_rec(iso: str | None, estimated: bool | None) -> str:
+    if not iso:
+        return ""
+    try:
+        from datetime import datetime
+
+        dt = datetime.fromisoformat(iso).astimezone()
+        return ("≈" if estimated else "") + dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return ""
+
+
+def hours_span(hours: list[str]) -> str:
+    """'2025-11-25 08' list -> '08:00–10:00' (or with dates when spanning days)."""
+    if not hours:
+        return ""
+    a, b = hours[0], hours[-1]
+    da, ha = a.split(" ")
+    db, hb = b.split(" ")
+    end = f"{(int(hb) + 1) % 24:02d}:00"
+    if len(hours) == 1:
+        return f"hour {ha}:00–{end}"
+    if da == db:
+        return f"hours {ha}:00–{end}"
+    return f"{da[5:]} {ha}:00 – {db[5:]} {end}"
+
+
 def fmt_size(n: float) -> str:
     for unit in ("B", "KB", "MB", "GB"):
         if n < 1024 or unit == "GB":
@@ -79,6 +106,7 @@ class MainWindow(QMainWindow):
         self.started = 0.0
         self.last_eta = None
         self.last_batch_dir: str | None = None
+        self.master_path: str | None = None
         self.cpu_retry_done = False
         self._close_after_cancel = False
         self._build()
@@ -118,8 +146,8 @@ class MainWindow(QMainWindow):
         v.addWidget(self.summary)
 
         self.tree = QTreeWidget()
-        self.tree.setColumnCount(5)
-        self.tree.setHeaderLabels(["#", "Recording", "Duration", "Format", "Note"])
+        self.tree.setColumnCount(6)
+        self.tree.setHeaderLabels(["#", "Recording", "Recorded", "Duration", "Format", "Note"])
         self.tree.setRootIsDecorated(False)
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -130,6 +158,7 @@ class MainWindow(QMainWindow):
         h.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         h.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         h.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        h.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         self.tree.setMinimumHeight(170)
         v.addWidget(self.tree, 1)
 
@@ -150,6 +179,8 @@ class MainWindow(QMainWindow):
         brow.addStretch(1)
         v.addLayout(brow)
 
+        self.hour_label = QLabel("")
+        v.addWidget(self.hour_label)
         self.stage_label = QLabel("")
         v.addWidget(self.stage_label)
         self.bar = QProgressBar()
@@ -174,6 +205,10 @@ class MainWindow(QMainWindow):
         self.open_btn = QPushButton("Open refined folder")
         self.open_btn.clicked.connect(self.open_refined)
         self.open_btn.setEnabled(False)
+        self.master_btn = QPushButton("Open master transcript")
+        self.master_btn.setToolTip("Transcript_Master_Complete.txt: everything transcribed so far, in chronological order")
+        self.master_btn.clicked.connect(self.open_master)
+        self.master_btn.setEnabled(False)
         self.log_btn = QPushButton("Logs")
         self.log_btn.setToolTip("Open the folder with diagnostic logs (useful when reporting a problem)")
         self.log_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(logs_dir()))))
@@ -183,6 +218,7 @@ class MainWindow(QMainWindow):
         self.cancel_btn.setEnabled(False)
         self.cancel_btn.clicked.connect(self.on_cancel)
         bottom.addWidget(self.open_btn)
+        bottom.addWidget(self.master_btn)
         bottom.addWidget(self.log_btn)
         bottom.addWidget(self.about_btn)
         bottom.addStretch(1)
@@ -254,38 +290,57 @@ class MainWindow(QMainWindow):
         self.scan = ev
         self.tree.clear()
         srcs = ev.get("sources", [])
+        status_note = {"processed": "already processed – will be moved to 'processed'",
+                       "duplicate": "already processed earlier – left in the folder",
+                       "partial": "partly processed – continues"}
+        cols = 6
         for i, s in enumerate(srcs, 1):
             ch = s.get("channels")
             fmt = f"{codec_name(s.get('codec', ''))} · {s.get('sample_rate', 0) / 1000:g} kHz · " \
                   f"{'mono' if ch == 1 else 'stereo' if ch == 2 else str(ch) + ' ch'}"
-            note = ""
-            if s.get("name_datetime"):
-                note = "recorded " + s["name_datetime"].replace("T", " ")[:16]
-            elif s.get("meta_datetime"):
-                note = "stored time " + s["meta_datetime"].replace("T", " ")[:16]
-            it = QTreeWidgetItem([str(i), s["name"], fmt_hms(s.get("duration")), fmt, note])
+            rec = fmt_rec(s.get("rec_time"), s.get("rec_estimated"))
+            hours_ = s.get("todo_hours") or s.get("all_hours") or []
+            note = status_note.get(s.get("status"), "")
+            if not note and hours_:
+                note = hours_span(hours_)
+            it = QTreeWidgetItem([str(i), s["name"], rec, fmt_hms(s.get("duration")), fmt, note])
             it.setTextAlignment(0, Qt.AlignmentFlag.AlignRight)
+            it.setToolTip(2, f"Recording time taken from: {s.get('rec_basis', '')}"
+                             + (" (estimated)" if s.get("rec_estimated") else "")
+                             + (f"\n{s.get('rec_note')}" if s.get("rec_note") else ""))
+            if s.get("status") in ("processed", "duplicate"):
+                for col in range(cols):
+                    it.setForeground(col, Qt.GlobalColor.gray)
             self.tree.addTopLevelItem(it)
         for p in ev.get("pending", []):
             for n in p["names"]:
-                it = QTreeWidgetItem(["", n, "", "", f"already processed ({p['batch']}); will be archived"])
-                for col in range(5):
+                it = QTreeWidgetItem(["", n, "", "", "", f"already processed ({p['batch']}); will be archived"])
+                for col in range(cols):
                     it.setForeground(col, Qt.GlobalColor.gray)
                 self.tree.addTopLevelItem(it)
         for u in ev.get("unreadable", []):
-            it = QTreeWidgetItem(["✕", u["name"], "", "", u.get("error", "cannot be read")])
-            for col in range(5):
+            it = QTreeWidgetItem(["✕", u["name"], "", "", "", u.get("error", "cannot be read")])
+            for col in range(cols):
                 it.setForeground(col, Qt.GlobalColor.darkRed)
-            it.setToolTip(4, u.get("error", ""))
+            it.setToolTip(5, u.get("error", ""))
             self.tree.addTopLevelItem(it)
-        n = len(srcs)
-        total = ev.get("total_duration", 0.0)
-        if n:
-            self.summary.setText(f"<b>{n}</b> audio file{'s' if n != 1 else ''} found · Total duration <b>{fmt_hms(total)}</b>")
-            self.order_label.setText(f"Processing order: by {ev.get('order_basis', '')}. "
-                                     "To change it, rename the files and choose the folder again.")
+        plan = ev.get("plan") or {}
+        todo = [x for x in srcs if x.get("status") in ("new", "partial")]
+        total = sum(x.get("duration", 0.0) for x in todo)
+        nh, nd = plan.get("hours_to_process", 0), plan.get("days_to_process", 0)
+        done_h = plan.get("completed_hours", 0)
+        if todo:
+            self.summary.setText(f"<b>{len(todo)}</b> new recording{'s' if len(todo) != 1 else ''} · "
+                                 f"<b>{nh}</b> hour{'s' if nh != 1 else ''} on <b>{nd}</b> day{'s' if nd != 1 else ''} to process"
+                                 f" · Total duration <b>{fmt_hms(total)}</b>"
+                                 + (f" &nbsp;<span style='color:#6b7280'>({done_h} hour(s) already finished)</span>" if done_h else ""))
+            self.order_label.setText("Processing order: by recording date and time – one clock hour at a time, oldest "
+                                     "first. Times marked ≈ are estimated from the file dates.")
+        elif srcs or done_h:
+            self.summary.setText(f"No new recordings to process. {done_h} hour(s) already finished in this folder.")
+            self.order_label.setText("Recordings must be placed directly in the folder (subfolders are not searched).")
         else:
-            self.summary.setText("No new audio recordings found directly in this folder.")
+            self.summary.setText("No audio recordings found directly in this folder.")
             self.order_label.setText("Recordings must be placed directly in the folder (subfolders are not searched).")
         warns = list(ev.get("warnings", []))
         if ev.get("unreadable"):
@@ -320,9 +375,22 @@ class MainWindow(QMainWindow):
         if t == "scan":
             self._show_scan(ev)
         elif t == "progress":
-            self.stage_label.setText(f"<b>{ev.get('label', '')}</b>" + (f" – {ev['detail']}" if ev.get("detail") else ""))
+            stage = f"<b>{ev.get('label', '')}</b>" + (f" – {ev['detail']}" if ev.get("detail") else "")
+            if ev.get("current_hour"):
+                self.hour_label.setText(
+                    f"Current day: <b>{ev['current_date']}</b> &nbsp; Current hour: <b>{ev['current_hour']}</b>"
+                    f" &nbsp;·&nbsp; Days completed: {ev.get('days_done', 0)} of {ev.get('days_total', 0)}"
+                    f" &nbsp;·&nbsp; Hours completed: {ev.get('hours_done', 0)} of {ev.get('hours_total', 0)}")
+                stage += f" &nbsp;<span style='color:#6b7280'>(current hour {int(ev.get('hour_fraction', 0) * 100)}%)</span>"
+            self.stage_label.setText(stage)
             self.bar.setValue(int(ev.get("fraction", 0) * 1000))
             self.last_eta = ev.get("eta")
+        elif t == "hour_done":
+            self.master_path = ev.get("master")
+            self.master_btn.setEnabled(bool(self.master_path))
+            self.open_btn.setEnabled(True)
+            self.device_label.setText(f"Finished {ev.get('date')} {ev.get('hour')} – results are available in "
+                                      f"'refined' while the next hours are processed.")
         elif t == "download":
             done, total = ev.get("done", 0), max(1, ev.get("total", 1))
             el = max(0.1, ev.get("elapsed", 0.1))
@@ -379,6 +447,8 @@ class MainWindow(QMainWindow):
             self._finish_ui()
             msg = result.get("message", "")
             warns = result.get("warnings") or []
+            if result.get("master"):
+                self.master_path = result["master"]
             if st == "success":
                 self.last_batch_dir = result.get("refined_dir")
                 extra = ("\n\nNotes:\n• " + "\n• ".join(warns)) if warns else ""
@@ -451,6 +521,13 @@ class MainWindow(QMainWindow):
         if target:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
 
+    def open_master(self):
+        p = Path(self.master_path) if getattr(self, "master_path", None) else None
+        if (p is None or not p.is_file()) and self.folder:
+            p = self.folder / REFINED / "Transcript_Master_Complete.txt"
+        if p and p.is_file():
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(p)))
+
     def about(self):
         notices = bundle_dir() / "THIRD_PARTY_NOTICES.txt"
         QMessageBox.about(self, f"About {APP_NAME}",
@@ -479,10 +556,12 @@ class MainWindow(QMainWindow):
         self.bar.setValue(0)
         self.time_label.setText("Elapsed time: 00:00:00")
         self.setAcceptDrops(False)
-        for wdg in (self.bar, self.stage_label, self.time_label):
+        self.hour_label.setText("")
+        for wdg in (self.bar, self.stage_label, self.time_label, self.hour_label):
             wdg.setVisible(True)
 
     def _finish_ui(self):
+        self.device_label.setText("")
         self.cancel_btn.setEnabled(False)
         self.browse_btn.setEnabled(True)
         self.setAcceptDrops(True)
@@ -491,15 +570,23 @@ class MainWindow(QMainWindow):
         self.time_label.setText("")
         self._set_idle()
 
+    def _refresh_buttons(self):
+        refined = self.folder / REFINED if self.folder else None
+        self.open_btn.setEnabled(bool(refined and refined.is_dir()))
+        self.master_btn.setEnabled(bool(refined and (refined / "Transcript_Master_Complete.txt").is_file()))
+
     def _set_idle(self):
         working = self.busy() and self.job_kind in ("process", "download")
         self.bar.setVisible(working)
         self.stage_label.setVisible(working)
         self.time_label.setVisible(working)
         sc = self.scan or {}
-        can = bool(sc.get("sources") or sc.get("pending")) and not self.busy() and not sc.get("busy")
+        plan = sc.get("plan") or {}
+        work = plan.get("hours_to_process") or plan.get("pending_archive") or sc.get("pending")
+        can = bool(work) and not self.busy() and not sc.get("busy")
         self.process_btn.setEnabled(can)
-        self.open_btn.setEnabled(bool(self.folder and (self.folder / REFINED).is_dir()))
+        self.hour_label.setVisible(working)
+        self._refresh_buttons()
 
     def _on_tick(self):
         if self.busy() and self.job_kind in ("process", "download"):

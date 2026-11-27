@@ -310,20 +310,51 @@ and capitalisation are kept.
 
 ## 7. Timestamps
 
-* Master timeline: 48 kHz sample index of the joined recording. Seconds = samples / 48 000.
-* Whisper segment and word times are relative to the decoded block and offset by the block's
-  start sample → absolute timeline. Segment start/end are taken from the first/last word.
-  Word times come from cross-attention alignment (DTW) and are typically accurate to
-  ~0.1–0.3 s.
-* `.txt` and `Transcript_Complete.txt`: absolute timeline, `HH:MM:SS.mmm`.
+* Hour timeline: 48 kHz sample index of the hour's joined audio. Each recording part in the hour
+  knows its start instant (recording start + offset of the part), its sample range in the
+  original and its position in the hour's audio (`_AudioRefine_hour.json`).
+* Whisper segment and word times (relative to the decoded block of the original recording) are
+  mapped to the part and from there to the hour's audio. Segment start/end are taken from the
+  first/last word. Word times come from cross-attention alignment (DTW) and are typically
+  accurate to ~0.1–0.3 s.
+* `Audio_NNN.txt`, `Transcript_Hour_Complete.txt`, day and master transcripts:
+  `[recording date and clock time | Audio_NNN position-in-that-file]`; clock times are computed
+  per recording part, so real-world gaps between recordings are respected (adding the elapsed
+  audio duration to the first recording's time would be wrong).
 * `.srt`: relative to the start of that audio file (`HH:MM:SS,mmm`), cues ≤ 2 lines of ~42
   characters and ≤ 7 s, split at word boundaries into evenly sized cues, no overlaps, minimum
   display time 0.3 s.
-* Segments crossing a 10-minute boundary are split at the word level: a word belongs to the file
-  in which it *starts*. Pieces are marked `…`; no word is dropped or duplicated (tested at
-  09:58–10:03, at exactly 10:00.000, and before/after).
+* Segments crossing a 10-minute file boundary or an hour boundary are split at the word level:
+  a word belongs to the file/hour in which it *starts*. Pieces are marked `…`; no word is dropped
+  or duplicated (tested at 09:00, at midnight, at exactly 10:00.000 and before/after).
 
----
+## 7a. Hour boundaries (version 1.1)
+
+Since 1.1 processing is organised by clock hour (TECHNICAL_DECISIONS.md §10). For the audio and
+speech processing this means:
+
+* **Analysis and plan per recording, not per hour.** Each recording is decoded and analysed once
+  (levels, noise, hum, low-frequency noise → enhancement plan, §4); every hour part of it uses the
+  same plan, so a recording does not change character at 09:00.
+* **Enhancement of an hour part** runs the filter chain from 4 s *before* the part's first sample
+  (taken from the same recording, discarded afterwards), so filter and DeepFilterNet state are
+  settled exactly as in a continuous run. The leveller sees the part's frames; 5 ms fades are
+  applied at both ends of every part (recording or hour edges), as at recording junctions.
+* **Joining inside an hour** is back-to-back in recording order; 10-minute segmentation is per
+  hour (the last file of an hour may be shorter); no audio of another hour is included.
+* **Recognition of an hour part** decodes the speech regions from up to **30 s before** to
+  **15 s after** the part (same recording), with the usual clips, language policy and safeguards.
+  Of the result, only words that **start inside the part** are kept. When the previous hour
+  already kept words of the same recording, this hour continues with the first word that starts
+  after the previous hour's last kept word (minus 50 ms), even if it starts a fraction of a second
+  before the boundary — so a word straddling the boundary appears exactly once. Segments cut by
+  the boundary are marked `…` at the cut.
+* **Clock times**: every entry's clock time is the start instant of its recording part plus the
+  position inside that part, so gaps between recordings in the same hour are respected. Times of
+  recordings whose start had to be estimated are marked `≈`.
+* **Regenerated hours** (a recording added later to a finished hour) reuse the existing enhanced
+  audio sample-for-sample (16-bit values written back without new dither) and the existing
+  transcript entries; only the new recording is processed.
 
 ## 8. Known weaknesses
 
@@ -342,6 +373,10 @@ and capitalisation are kept.
   VM); GPU acceleration is implemented but not yet verified on real NVIDIA hardware.
 * Word timestamps can be off by a few hundred milliseconds, which affects which file a word at
   a 10-minute boundary is assigned to (never whether it appears).
+* Overlapping recordings (two devices recording at the same time) are placed one after the
+  other inside the hour; their transcripts are interleaved by clock time.
+* A recording whose start time had to be estimated from file dates can land in the wrong hour
+  (marked `≈`); renaming the file with its correct date and time fixes it.
 * No human listening test has been performed; listening-quality claims rest on objective
   measures (ESTOI) and on the conservative design.
 

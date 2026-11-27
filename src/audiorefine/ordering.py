@@ -89,12 +89,15 @@ def parse_metadata_datetime(value: str) -> datetime | None:
             dt = datetime.strptime(v, fmt)
         except ValueError:
             continue
-        if dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
         if dt.year < 1990 or dt.year > 2100:
             return None
-        return dt
+        return dt   # timezone-aware when the value carries an offset/UTC marker, else local wall-clock
     return None
+
+
+def to_instant(dt: datetime) -> float:
+    """POSIX timestamp of a datetime; naive values are interpreted as local wall-clock time."""
+    return dt.timestamp()
 
 
 def determine_order(items: Sequence) -> tuple[list, str, list[str]]:
@@ -114,7 +117,7 @@ def determine_order(items: Sequence) -> tuple[list, str, list[str]]:
         ordered = sorted(items, key=lambda i: natural_key(i.name))
         basis = "file name (natural order, as in Windows Explorer)"
     if len(ordered) > 1 and all(i.meta_datetime is not None for i in ordered):
-        by_meta = sorted(ordered, key=lambda i: (i.meta_datetime, natural_key(i.name)))
+        by_meta = sorted(ordered, key=lambda i: (to_instant(i.meta_datetime), natural_key(i.name)))
         if [i.name for i in by_meta] != [i.name for i in ordered]:
             warnings.append(
                 "The recording times stored inside the files suggest a different order. "

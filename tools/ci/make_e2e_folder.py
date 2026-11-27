@@ -1,17 +1,21 @@
-"""Create the end-to-end test folder used by the Windows build (real Danish/English speech).
+"""Create the end-to-end test folder used by the Windows build (real Danish/English speech, hourly layout).
 
-Layout (stitched timeline):
-  Recording 1.m4a   Danish FLEURS excerpt, AAC mono 48 kHz            0:00 - 1:08
-  Recording 2.mp3   English FLEURS excerpt, MP3 stereo 44.1 kHz       1:08 - 1:49
-  Recording 10.flac 10.5 min of quiet room noise with the Danish excerpt placed so that it
-                    crosses the 10:00 segment boundary of the stitched recording
-  broken.wma        a damaged file (must be reported and left untouched)
-  notes.txt         an unrelated file (must be left untouched)
-Writes <folder>.expect.json next to the folder with hashes and speech positions.
+Recordings (start time from the file name unless noted):
+  20251125_080400.m4a   Danish, AAC                                  -> 2025-11-25 08-00
+  20251125_083000.mp3   English, stereo MP3 (incl. a very quiet utterance) -> 08-00
+  20251125_085826.flac  Danish speech from 08:59:26 to 09:00:34      -> split into 08-00 and 09-00
+  20251125_100000.flac  12 minutes; Danish speech across 10:10:00    -> 10-00: Audio_001 (10:00) + Audio_002
+  20251126_071200.wav   English                                      -> 2025-11-26 07-00
+  Optagelse uden tid.m4a  no time in name/metadata; file date 2025-11-26 14:32:40 -> ≈ 14-00
+  broken.wma            damaged (reported, untouched)
+  notes.txt             unrelated (untouched)
+Writes <folder>.expect.json next to the folder.
 """
 import hashlib
 import json
+import os
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -28,27 +32,41 @@ def main():
     da, sr = sf.read(ROOT / "tests" / "data" / "fleurs_da_dk.flac", dtype="float32")
     en, _ = sf.read(ROOT / "tests" / "data" / "fleurs_en_us.flac", dtype="float32")
     refs = json.loads((ROOT / "tests" / "data" / "fleurs_refs.json").read_text(encoding="utf-8"))
-    write_audio(out / "Recording 1.m4a", da, sr)
-    write_audio(out / "Recording 2.mp3", np.stack([en, en * 0.9], 1), sr)
-    t_a, t_b = len(da) / sr, len(en) / sr
-    long_len = int(10.5 * 60 * sr)
     rng = np.random.default_rng(7)
-    noise = (rng.standard_normal(long_len) * 0.002).astype(np.float32)
-    start_in_c = 600.0 - (t_a + t_b) - t_a / 2           # centre of the clip at 10:00 stitched
-    s = int(start_in_c * sr)
-    c = noise.copy()
-    c[s:s + len(da)] += da * 0.5
-    write_audio(out / "Recording 10.flac", c, sr)
+    t_da, t_en = len(da) / sr, len(en) / sr
+
+    def noise(seconds):
+        return (rng.standard_normal(int(seconds * sr)) * 0.002).astype(np.float32)
+
+    write_audio(out / "20251125_080400.m4a", da, sr)
+    write_audio(out / "20251125_083000.mp3", np.stack([en, en * 0.9], 1), sr)
+    x = noise(150)                                # file starts 08:58:26, speech from 08:59:26 to ~09:00:34
+    x[int(60 * sr):int(60 * sr) + len(da)] += da * 0.6
+    write_audio(out / "20251125_085826.flac", x, sr)
+    y = noise(12 * 60)
+    s = int((600 - t_da / 2) * sr)
+    y[s:s + len(da)] += da * 0.5
+    write_audio(out / "20251125_100000.flac", y, sr)
+    write_audio(out / "20251126_071200.wav", en, sr)
+    write_audio(out / "Optagelse uden tid.m4a", np.concatenate([noise(2), da[: int(20 * sr)], noise(2)]), sr)
+    t = time.mktime((2025, 11, 26, 14, 32, 40, 0, 0, -1))
+    os.utime(out / "Optagelse uden tid.m4a", (t, t))
     (out / "broken.wma").write_bytes(rng.bytes(6000))
     (out / "notes.txt").write_text("unrelated file", encoding="utf-8")
     hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir()}
     expect = {
         "hashes": hashes,
+        "hours": ["2025-11-25/08-00", "2025-11-25/09-00", "2025-11-25/10-00", "2025-11-26/07-00", "2025-11-26/14-00"],
+        "processed": {"20251125_080400.m4a": "2025-11-25/08-00", "20251125_083000.mp3": "2025-11-25/08-00",
+                      "20251125_085826.flac": "2025-11-25/08-00", "20251125_100000.flac": "2025-11-25/10-00",
+                      "20251126_071200.wav": "2025-11-26/07-00", "Optagelse uden tid.m4a": "2025-11-26/14-00"},
         "spans": [
-            {"lang": "da", "start": 0.0, "end": t_a, "ref": refs["da_dk"]["text"]},
-            {"lang": "en", "start": t_a, "end": t_a + t_b, "ref": refs["en_us"]["text"]},
-            {"lang": "da", "start": t_a + t_b + start_in_c, "end": t_a + t_b + start_in_c + t_a, "ref": refs["da_dk"]["text"],
-             "crosses": 600.0},
+            {"label": "Danish 08:04", "start": "2025-11-25 08:04:00", "seconds": t_da, "ref": refs["da_dk"]["text"]},
+            {"label": "English 08:30 (incl. quiet utterance)", "start": "2025-11-25 08:30:00", "seconds": t_en, "ref": refs["en_us"]["text"]},
+            {"label": "Danish across 09:00", "start": "2025-11-25 08:59:26", "seconds": t_da, "ref": refs["da_dk"]["text"]},
+            {"label": "Danish across the 10-minute file boundary", "start": f"2025-11-25 10:{int((600 - t_da / 2) // 60):02d}:{int((600 - t_da / 2) % 60):02d}",
+             "seconds": t_da, "ref": refs["da_dk"]["text"]},
+            {"label": "English next day 07:12", "start": "2025-11-26 07:12:00", "seconds": t_en, "ref": refs["en_us"]["text"]},
         ],
     }
     Path(str(out) + ".expect.json").write_text(json.dumps(expect, ensure_ascii=False, indent=1), encoding="utf-8")

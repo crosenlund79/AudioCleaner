@@ -3,15 +3,20 @@
 **One folder. One button. Clean audio. Timestamped transcripts.**
 
 AudioRefine is a small Windows utility that turns a folder of raw recordings (phone recordings,
-dictaphone files, voice memos …) into:
+dictaphone files, voice memos …) into speech-enhanced audio and timestamped transcripts,
+**organised by the date and clock hour in which the recordings were made**:
 
-* speech-enhanced audio, joined into one continuous recording and cut into exact
-  **10-minute FLAC files** (`Audio_001.flac`, `Audio_002.flac`, …),
-* a **timestamped transcript** and an **SRT subtitle file** for every 10-minute file,
-* one **`Transcript_Complete.txt`** with the whole conversation in chronological order, ready to
-  read or to paste into ChatGPT or Claude,
-
-and then moves the original recordings, unchanged, into a `processed` folder.
+* it works through the recordings **one clock hour at a time, oldest first**, and finishes each
+  hour completely before starting the next – you can listen to and read the first hours while
+  later ones are still being processed;
+* each hour gets enhanced audio in exact **10-minute FLAC files**, a transcript and subtitle file
+  for each of them, and **`Transcript_Hour_Complete.txt`**;
+* each day gets **`Transcript_Day_Complete.txt`**;
+* the `refined` folder holds **`Transcript_Master_Complete.txt`** – everything ever transcribed
+  in this folder, in chronological order, ready to read or to upload to ChatGPT or Claude. It is
+  updated after every finished hour and grows when you add more recordings later;
+* original recordings are moved, unchanged, into `processed\<date>\<hour>` once every part of
+  them has been processed.
 
 Everything runs locally on your computer. Recordings are never uploaded anywhere.
 Danish and English are recognised automatically (also mixed in the same batch).
@@ -25,8 +30,9 @@ Danish and English are recognised automatically (also mixed in the same batch).
 2. Start **`AudioRefine.exe`**.
 3. Click **Browse…** and choose the folder with your recordings
    (or drag the folder onto the window).
-4. Check the list: it shows the recordings in the order they will be joined.
-5. Click **Process folder**.
+4. Check the list: it shows each recording's detected date and time and the hour it belongs to.
+5. Click **Process folder**. The window shows the current day and hour, how many hours are done,
+   and the overall progress. **Open master transcript** becomes available after the first hour.
 
 The **first time**, AudioRefine asks to download its speech-recognition model
 (Whisper large-v3, 3.1 GB; plus 1.3 GB of acceleration files if you have a suitable NVIDIA
@@ -59,13 +65,15 @@ NVIDIA GPU is typically 10–20× faster. Speech enhancement adds about 5 % of t
 
 ## What you get
 
-Given this folder:
+Given this folder (recordings from two days):
 
 ```
 C:\Audio dumps\
-    Recording001.m4a
-    Recording002.m4a
-    Recording003.wav
+    20251125_080412.m4a      (recorded 08:04)
+    20251125_083000.m4a      (08:30)
+    20251125_085500.m4a      (08:55, 20 minutes long – runs into the 09:00 hour)
+    20251125_103200.m4a      (10:32)
+    20251126_071200.m4a      (next day, 07:12)
 ```
 
 after processing:
@@ -73,96 +81,120 @@ after processing:
 ```
 C:\Audio dumps\
     processed\
-        2026-11-26_14-35-02\
-            Recording001.m4a          ← originals, moved unchanged (verified by checksum)
-            Recording002.m4a
-            Recording003.wav
+        2025-11-25\08-00\   20251125_080412.m4a, 20251125_083000.m4a, 20251125_085500.m4a
+        2025-11-25\10-00\   20251125_103200.m4a
+        2025-11-26\07-00\   20251126_071200.m4a
     refined\
-        2026-11-26_14-35-02\
-            Audio_001.flac            ← 00:00:00 – 00:10:00
-            Audio_001.txt
-            Audio_001.srt
-            Audio_002.flac            ← 00:10:00 – 00:20:00
-            Audio_002.txt
-            Audio_002.srt
-            Audio_003.flac            ← 00:20:00 – 00:24:17 (last file may be shorter)
-            Audio_003.txt
-            Audio_003.srt
-            Transcript_Complete.txt
-            _AudioRefine_details.json ← technical record (order, positions, checksums, settings used)
-            _AudioRefine_log.txt      ← diagnostic log of this run (contains no transcript text)
+        Transcript_Master_Complete.txt        ← all days and hours, chronological
+        2025-11-25\
+            Transcript_Day_Complete.txt
+            08-00\
+                Audio_001.flac  Audio_001.txt  Audio_001.srt    (first 10 minutes of this hour's audio)
+                Audio_002.flac  Audio_002.txt  Audio_002.srt
+                Transcript_Hour_Complete.txt
+                _AudioRefine_hour.json                           (technical record of the hour)
+            09-00\                                              (the part of the 08:55 recording after 09:00)
+            10-00\
+        2025-11-26\
+            Transcript_Day_Complete.txt
+            07-00\
 ```
 
-Each processing run gets its own **batch folder** named after the date and time it started, in
-both `refined` and `processed`. If you process the same folder again later, only new recordings
-lying directly in the folder are processed; earlier batches are never touched.
+* Folders exist only for hours that contain recordings (`10-00` but no empty `09-00`… unless a
+  recording runs into it).
+* Inside an hour, the recordings are joined back-to-back in recording order and cut into exact
+  10-minute files; the last file of an hour may be shorter. No silence is added to fill an hour,
+  and audio of different hours is never mixed in one file.
+* A recording that runs across a full hour (or midnight) is split **virtually** at the boundary:
+  the part before 09:00 is in `08-00`, the rest in `09-00`. The original file is never cut; it is
+  archived under the hour in which it **started**, and only after all its parts are finished.
 
-### Transcript format
+### Transcript formats
 
-`Audio_002.txt`:
+`Transcript_Hour_Complete.txt` and `Audio_NNN.txt`:
 
 ```
-Recording timeline: 00:10:00 – 00:20:00
-Audio file: Audio_002.flac
-Source recordings: Recording002.m4a, Recording003.wav
+Recording date: 2025-11-25
+Recording hour: 08:00–09:00
 
-[00:10:04.120 – 00:10:08.420]
-Det var egentlig det, jeg prøvede at forklare dig tidligere.
+── 20251125_080412.m4a begins (2025-11-25 08:04:12) ──
 
-── Recording003.wav begins at 00:15:20.000 ──
+[2025-11-25 08:04:15 | Audio_001 00:00:03]
+Det var egentlig det, jeg prøvede at forklare dig.
 
-[00:15:22.810 – 00:15:25.320] [uncertain]
+[2025-11-25 08:04:19 | Audio_001 00:00:07] [uncertain]
 Ja, det kan jeg godt forstå.
 ```
 
-* Times in `.txt` files and `Transcript_Complete.txt` count from the start of the whole
-  (joined) recording; they do not restart for each 10-minute file.
-* Times in `.srt` files count from the start of *their own* audio file, so subtitles play in
-  sync when you open e.g. `Audio_002.flac` with `Audio_002.srt` in VLC.
-* A sentence that crosses a 10-minute boundary is split at the word where the boundary falls;
-  the two halves are marked with `…`. `Transcript_Complete.txt` keeps it in one piece.
-* `[uncertain]` marks passages the recogniser was not confident about.
-  `[unclear speech]` marks places where someone spoke but no words could be recognised.
-  The transcript is automatic and has not been checked by a person; it is not a certified or
-  forensic record.
-* `── Recording003.wav begins at … ──` shows where each original recording starts, so you can
-  go back to the source.
+* Every entry shows the **recording date and clock time** and the audio file with the position
+  inside it. Clock times are computed per recording (gaps between recordings are respected).
+* `≈2025-11-26 14:32:19` – a `≈` marks times that had to be **estimated** from the file's dates
+  because neither the file name nor the file itself says when it was recorded.
+* `.srt` subtitle times count from the start of *their own* audio file, so they play in sync in
+  VLC.
+* A sentence that crosses an hour boundary or a 10-minute file boundary is split at the word
+  where the boundary falls; the halves are marked with `…`. No word is lost or repeated.
+* `[uncertain]` marks passages the recogniser was not confident about; `[unclear speech]` marks
+  places where someone spoke but no words could be recognised. The transcript is automatic and
+  has not been checked by a person; it is not a certified or forensic record.
+
+`Transcript_Day_Complete.txt` contains all finished hours of the day under hour headings;
+`Transcript_Master_Complete.txt` contains all finished days and hours under date and hour
+headings, with a status line at the top: **in progress**, **interrupted** (process the folder
+again to continue) or **complete**. Both are rebuilt from the hour records after every finished
+hour – nothing is transcribed twice.
 
 ---
 
-## How the order is decided
+## How the recording time is determined
 
-AudioRefine joins the recordings in this order:
+AudioRefine uses the most reliable information available, in this order:
 
-1. If **every** file name contains a date and time (e.g. `20240315_143022.m4a`,
-   `2024-03-15 14.30.22.m4a`, `Recording 2024-03-15 at 14.30.22.m4a`), by that date and time.
-2. Otherwise by **file name, sorted naturally** — the same order Windows Explorer shows when
-   sorting by name: `Recording2` comes before `Recording10`.
+1. **Date and time in the file name** (e.g. `20251125_080412.m4a`, `2025-11-25 08.04.12.m4a`,
+   `Recording 2025-11-25 at 08.04.12.m4a`) – written by the recorder, survives copying.
+2. **Recording time stored inside the file** (most phones and recorders write one).
+3. **File creation time** – only if it matches the modification time minus the recording length
+   (i.e. it really is when the recording started, not when the file was copied). *Estimated.*
+4. **File modification time minus the recording length** (a file is last written when the
+   recording stops). *Estimated* – copying from a phone can change these dates.
 
-Dates stored inside the files are only used to warn you when they disagree with this order
-(devices write them inconsistently), and file-system dates are never used (copying changes them).
-The order is shown before you press Process. To change it, rename the files.
+Estimated times are marked `≈` in the window and in every transcript. The time at which you run
+AudioRefine is never used. Times are shown in this PC's local time zone; daylight-saving changes
+are handled by Windows' time-zone rules.
 
-Recordings are joined back-to-back: no silence is inserted between them and nothing is removed,
-so timestamps are the elapsed time within the joined recording, not clock time.
+The list in the window shows each recording's detected time and hour. If a time is wrong, the
+simplest fix is to rename the file with its correct date and time (`YYYYMMDD_HHMMSS`).
 
 ---
+
+## Interruptions, adding recordings later, processing again
+
+* Every finished hour is a checkpoint. If you press **Cancel**, close the window, or the PC
+  crashes, finished hours, the day transcripts and the master transcript stay complete and
+  usable; the hour being worked on is discarded and simply redone next time. Process the same
+  folder again and AudioRefine continues with the remaining hours.
+* Add new recordings to the folder at any time and press **Process folder** again. Only the
+  affected hours are processed: a recording for an hour that is already finished is merged into
+  that hour (the existing audio is reused bit-for-bit and its transcript is kept, only the new
+  recording is enhanced and transcribed), recordings from older dates are placed in their
+  correct chronological position, and the master transcript is regenerated.
+* Processing a folder with nothing new does nothing. A copy of a recording that was already
+  processed is recognised by its content, reported and left in the folder.
 
 ## How your files are handled (safety)
 
 * Original recordings are **never modified**. They are only read.
-* All results are first written to a hidden temporary folder (`refined\.incomplete-…`). Only
-  when every audio file and transcript has been written **and verified**, the folder is renamed
-  to its final name in one step.
-* Only after that are the originals moved to `processed\<batch>`. Each move is verified with a
-  SHA-256 checksum. A file is never overwritten.
-* If anything fails, or you press **Cancel**, or the PC crashes: your recordings stay where they
-  were and nothing that looks like a finished result is left behind. Just process again.
-* If an original cannot be moved (for example because a media player has it open), the results
-  are still kept, the file stays where it is, it is **not** processed again, and it is moved the
-  next time you click Process.
-* Files that are not audio, damaged audio files and subfolders are left alone. Damaged files
-  are listed in red with the reason.
+* Each hour is built in a hidden temporary folder (`refined\<date>\.incomplete-HH-00`) and appears
+  under its final name only when all its audio files and transcripts were written **and
+  verified**. Updating an existing hour uses a recorded, crash-safe swap.
+* An original is moved to `processed\<date>\<hour>` only after **every** part of it (a long
+  recording can span several hours) is finished. Each move is verified with SHA-256 before and
+  after. Nothing is ever overwritten – a different recording with the same name gets a
+  numbered name.
+* If an original cannot be moved (for example because a media player has it open), it stays in
+  the folder, is **not** processed again, and is moved the next time you click Process.
+* Files that are not audio, damaged audio files and subfolders are left alone. Damaged files are
+  listed in red with the reason.
 * Two AudioRefine windows cannot process the same folder at the same time.
 
 ---
@@ -186,6 +218,8 @@ bit rate. Files with video are skipped. Output is always 48 kHz 16-bit mono FLAC
   create an empty folder named `data` next to `AudioRefine.exe`.
 * **Command line:** `AudioRefineEngine.exe process "C:\Audio dumps"` processes a folder without the
   window (`AudioRefineEngine.exe --help` lists all commands).
+* **Folders processed with AudioRefine 1.0** (batch folders such as `refined\2026-11-26_14-35-02`)
+  are left as they are; they are not part of the master transcript.
 * **Uninstall:** delete the program folder and `%LOCALAPPDATA%\AudioRefine`.
 
 ---

@@ -33,8 +33,12 @@ def _to_int16_dithered(x: np.ndarray, rng: np.random.Generator) -> np.ndarray:
 
 
 def write_segments(master: Path, out_dir: Path, files: list[SegmentFile], progress: Callable[[float], None] | None = None,
-                   cancel: Callable[[], None] | None = None) -> list[dict]:
+                   cancel: Callable[[], None] | None = None,
+                   exact_ranges: list[tuple[int, int]] | None = None) -> list[dict]:
+    """Write the FLAC segments. Samples inside ``exact_ranges`` already are 16-bit values (audio
+    reused from an earlier output) and are written back unchanged, without new dither."""
     total = raw_length(master)
+    exact_ranges = sorted(exact_ranges or [])
     rng = np.random.default_rng(1234567)
     results = []
     for f in files:
@@ -43,10 +47,15 @@ def write_segments(master: Path, out_dir: Path, files: list[SegmentFile], progre
         h = hashlib.sha256()
         count = 0
         with sf.SoundFile(tmp, "w", samplerate=MASTER_SR, channels=1, subtype="PCM_16", format="FLAC") as out:
-            for _, x in iter_raw(master, MASTER_SR * 20, f.start_sample, f.end_sample):
+            for pos, x in iter_raw(master, MASTER_SR * 20, f.start_sample, f.end_sample):
                 if cancel:
                     cancel()
                 q = _to_int16_dithered(x, rng)
+                for a, b in exact_ranges:
+                    lo, hi = max(a, pos), min(b, pos + len(x))
+                    if hi > lo:
+                        q[lo - pos:hi - pos] = np.clip(np.round(x[lo - pos:hi - pos].astype(np.float64) * 32767.0),
+                                                       -32768, 32767).astype(np.int16)
                 out.write(q)
                 h.update(q.tobytes())
                 count += len(q)
@@ -55,6 +64,23 @@ def write_segments(master: Path, out_dir: Path, files: list[SegmentFile], progre
         tmp.replace(path)
         results.append({"file": f.audio_name, "samples": count, "pcm_sha256": h.hexdigest()})
     return results
+
+
+def read_int16(dir_: Path, segs: list[dict], a: int, b: int, block: int = MASTER_SR * 20):
+    """Yield int16 blocks of an earlier hour output between hour-timeline samples a and b."""
+    for sg in segs:
+        lo, hi = max(a, sg["start_sample"]), min(b, sg["end_sample"])
+        if hi <= lo:
+            continue
+        with sf.SoundFile(str(dir_ / sg["audio"])) as f:
+            f.seek(lo - sg["start_sample"])
+            left = hi - lo
+            while left > 0:
+                blk = f.read(min(block, left), dtype="int16")
+                if blk.size == 0:
+                    raise IOError(f"{sg['audio']} is shorter than recorded in its manifest")
+                left -= blk.size
+                yield blk
 
 
 def verify_segment(path: Path, expected_samples: int, expected_pcm_sha256: str | None = None) -> str | None:

@@ -15,6 +15,7 @@ class SourceInfo:
     name: str
     size: int
     mtime: float
+    birthtime: float | None = None   # file-system creation time where the OS provides it (Windows)
     ok: bool = False
     error: str = ""
     container: str = ""
@@ -42,7 +43,8 @@ _DATE_TAGS = ("com.apple.quicktime.creationdate", "creation_time", "date", "orig
 
 def probe(path: Path, check_decode: bool = True) -> SourceInfo:
     st = path.stat()
-    info = SourceInfo(path=path, name=path.name, size=st.st_size, mtime=st.st_mtime)
+    info = SourceInfo(path=path, name=path.name, size=st.st_size, mtime=st.st_mtime,
+                      birthtime=getattr(st, "st_birthtime", None))
     info.name_datetime = parse_filename_datetime(path.stem)
     if st.st_size == 0:
         info.error = "The file is empty."

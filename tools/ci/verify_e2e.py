@@ -1,9 +1,10 @@
-"""Verify the result of a packaged end-to-end run (see make_e2e_folder.py). Exit 1 on failure."""
+"""Verify a packaged end-to-end run in the hourly layout (see make_e2e_folder.py). Exit 1 on failure."""
 import hashlib
 import json
 import re
 import sys
 import unicodedata
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import soundfile as sf
@@ -22,54 +23,59 @@ def norm(t):
     return " ".join(re.sub(r"[^\w\s]", " ", t).split())
 
 
-def to_s(ts):
-    h, m, s = ts.split(":")
-    return int(h) * 3600 + int(m) * 60 + float(s.replace(",", "."))
-
-
 def main():
     root = Path(sys.argv[1]).resolve()
-    expect = json.loads(Path(str(root) + ".expect.json").read_text(encoding="utf-8"))
-    batches = [p for p in (root / "refined").iterdir() if p.is_dir() and not p.name.startswith(".")]
-    check(len(batches) == 1, f"one batch folder in refined ({[b.name for b in batches]})")
-    b = batches[0]
-    hidden = [p.name for p in (root / "refined").iterdir() if p.name.startswith(".incomplete")]
-    check(not hidden, "no incomplete staging folder left")
-    det = json.loads((b / "_AudioRefine_details.json").read_text(encoding="utf-8"))
-    check(det["state"] == "complete", f"batch state complete ({det['state']})")
-    names = [s["name"] for s in det["sources"]]
-    check(names == ["Recording 1.m4a", "Recording 2.mp3", "Recording 10.flac"], f"natural order {names}")
-    arch = root / "processed" / b.name
-    for n in names:
-        p = arch / n
-        ok = p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest() == expect["hashes"][n]
-        check(ok and not (root / n).exists(), f"{n} archived unchanged")
+    exp = json.loads(Path(str(root) + ".expect.json").read_text(encoding="utf-8"))
+    refined, processed = root / "refined", root / "processed"
+    hours = sorted(f"{d.name}/{h.name}" for d in refined.iterdir() if d.is_dir() for h in d.iterdir() if h.is_dir())
+    check(hours == exp["hours"], f"hour folders {hours}")
+    check(not list(refined.rglob(".incomplete-*")) and not list(refined.rglob(".replaced-*")), "no leftover staging")
+    for h in exp["hours"]:
+        d = refined / h
+        m = json.loads((d / "_AudioRefine_hour.json").read_text(encoding="utf-8"))
+        check(m["state"] == "complete", f"{h}: manifest complete")
+        for s in m["segments"]:
+            info = sf.info(str(d / s["audio"]))
+            check(info.frames == s["samples"] and info.samplerate == 48000, f"{h}/{s['audio']}: {info.frames} samples")
+            check((d / s["txt"]).is_file() and (d / s["srt"]).is_file(), f"{h}/{s['audio']}: txt and srt present")
+        check(sum(s["samples"] for s in m["segments"]) == m["total_samples"], f"{h}: no samples lost")
+        check((d / "Transcript_Hour_Complete.txt").read_text(encoding="utf-8").startswith("AudioRefine – hour transcript"),
+              f"{h}: hour transcript")
+    h10 = json.loads((refined / "2025-11-25/10-00/_AudioRefine_hour.json").read_text(encoding="utf-8"))
+    check([s["samples"] for s in h10["segments"]] == [600 * 48000, h10["total_samples"] - 600 * 48000],
+          "10-00: Audio_001 exactly 10:00, Audio_002 the rest")
+    for d in ("2025-11-25", "2025-11-26"):
+        check((refined / d / "Transcript_Day_Complete.txt").is_file(), f"{d}: day transcript")
+    for name, rel in exp["processed"].items():
+        p = processed / rel / name
+        ok = p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest() == exp["hashes"][name] and not (root / name).exists()
+        check(ok, f"{name} archived unchanged in processed/{rel}")
     for n in ("broken.wma", "notes.txt"):
         p = root / n
-        check(p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest() == expect["hashes"][n], f"{n} left untouched")
-    total = sum(s["decoded_samples"] for s in det["sources"])
-    f1, f2 = sf.info(str(b / "Audio_001.flac")), sf.info(str(b / "Audio_002.flac"))
-    check(f1.frames == 600 * 48000, f"Audio_001 exactly 10:00 ({f1.frames} samples)")
-    check(f1.frames + f2.frames == total, f"no samples lost or duplicated ({f1.frames + f2.frames} == {total})")
-    check(not (b / "Audio_003.flac").exists(), "exactly two segments")
-    t2 = (b / "Audio_002.txt").read_text(encoding="utf-8")
-    check(t2.startswith("Recording timeline: 00:10:00 – "), "Audio_002.txt uses the continuous timeline")
-    srt2 = (b / "Audio_002.srt").read_text(encoding="utf-8")
-    cues = re.findall(r"(\d\d:\d\d:\d\d,\d\d\d) --> (\d\d:\d\d:\d\d,\d\d\d)", srt2)
-    check(bool(cues) and to_s(cues[0][0]) < 60, f"Audio_002.srt is relative to its file (first cue {cues[:1]})")
-    full = (b / "Transcript_Complete.txt").read_text(encoding="utf-8")
-    segs = [(to_s(m.group(1)), to_s(m.group(2)), m.group(3)) for m in
-            re.finditer(r"\[(\d\d:\d\d:\d\d\.\d\d\d) – (\d\d:\d\d:\d\d\.\d\d\d)\][^\n]*\n([^\n]*)", full)]
+        check(p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest() == exp["hashes"][n], f"{n} left untouched")
+    master = (refined / "Transcript_Master_Complete.txt").read_text(encoding="utf-8")
+    heads = re.findall(r"DATE: \S+|HOUR: \S+", master)
+    check(heads == ["DATE: 2025-11-25", "HOUR: 08:00–09:00", "HOUR: 09:00–10:00", "HOUR: 10:00–11:00",
+                    "DATE: 2025-11-26", "HOUR: 07:00–08:00", "HOUR: 14:00–15:00"], f"master order {heads}")
+    check("Status: COMPLETE" in master and "END OF TRANSCRIPT" in master, "master complete")
+    entries = re.findall(r"^\[(≈?)(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) \| (Audio_\d+) (\d\d:\d\d:\d\d)\][^\n]*\n([^\n]*)", master, re.M)
+    lines = re.findall(r"^\[.*\].*$", master, re.M)
+    check(len(lines) == len(set(lines)), "no duplicated entries in the master transcript")
+    stamps = [e[1] for e in entries]
+    check(stamps == sorted(stamps), "master entries in chronological order")
+    check(any(e[0] == "≈" and e[1].startswith("2025-11-26 14:32") for e in entries), "estimated time marked with ≈")
     import jiwer
 
-    for sp in expect["spans"]:
-        hyp = " ".join(t for s, e, t in segs if sp["start"] - 0.5 <= (s + e) / 2 < sp["end"] + 0.5)
+    for sp in exp["spans"]:
+        a = datetime.strptime(sp["start"], "%Y-%m-%d %H:%M:%S")
+        b = a + timedelta(seconds=sp["seconds"])
+        hyp = " ".join(t for _, ts, _, _, t in entries
+                       if a - timedelta(seconds=1) <= datetime.strptime(ts, "%Y-%m-%d %H:%M:%S") < b + timedelta(seconds=1))
+        hyp = hyp.replace("…", " ")
         w = jiwer.wer(norm(sp["ref"]), norm(hyp)) if hyp else 1.0
-        label = f"{sp['lang']} {sp['start']:.1f}-{sp['end']:.1f}s" + (" (crosses 10:00)" if sp.get("crosses") else "")
-        print(f"   WER {label}: {w * 100:.1f}%")
-        check(w < 0.25, f"word error rate {label} below 25% ({w * 100:.1f}%)")
-    print("\n===== Transcript_Complete.txt =====\n" + full)
-    print("===== Audio_002.txt =====\n" + t2[:3000])
+        print(f"   WER {sp['label']}: {w * 100:.1f}%")
+        check(w < 0.25, f"word error rate {sp['label']} below 25% ({w * 100:.1f}%)")
+    print("\n===== Transcript_Master_Complete.txt =====\n" + master)
     if failures:
         print(f"\n{len(failures)} check(s) failed")
         sys.exit(1)

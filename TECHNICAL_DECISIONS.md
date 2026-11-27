@@ -171,14 +171,15 @@ for nothing.
 
 See README "How your files are handled" and `batch.py`. Key decisions:
 
-* **Batch folders** (`refined/<YYYY-MM-DD_HH-MM-SS>`, `processed/<same>`) instead of numbered
-  file names: never collides, keeps runs separate, and the pairing of outputs and originals is
-  obvious. Collisions (two runs in the same second) get `_2`, `_3`.
+* **Hour folders** (`refined/<date>/<HH-00>`, `processed/<date>/<HH-00>`; version 1.1) with a
+  manifest written last; version 1.0 used one batch folder per run. Never overwritten: an hour is
+  replaced only through a journalled staging swap, archived originals get numbered names on a
+  name clash.
 * **Staging + single atomic rename** for outputs; **move (rename) with SHA-256 verification
   before and after** for originals; cross-volume moves fall back to copy → verify → delete.
-* **Journal** (`_AudioRefine_details.json`) updated after every archived file; incomplete
-  archiving is detected on the next scan, the affected originals are excluded from new
-  batches and moved first when the user processes again.
+* **Records**: hour manifests (what is finished) and `refined/_AudioRefine_archive.json` (what was
+  archived, by SHA-256). A recording whose parts are all finished but which is still in the
+  folder (interrupted before archiving) is archived on the next run, never processed again.
 * **Folder lock** with stale-lock detection (PID check) prevents concurrent runs.
 * **Stale staging folders** (from crashes) are removed only if they carry AudioRefine's marker
   file.
@@ -186,13 +187,40 @@ See README "How your files are handled" and `batch.py`. Key decisions:
   changed during processing (e.g. still being copied) aborts the run.
 * Pre-flight disk-space check, clear messages for permission/locked/disk-full errors.
 
-## 9. Recording order
+## 9. Recording time and order (version 1.1)
 
-Natural (Explorer-like) file-name order by default; chronological by file-name timestamps when
-*all* names carry one. Embedded metadata only produces a warning; file-system times are never
-used. Rationale in README "How the order is decided" and `ordering.py`.
+Since 1.1 every recording is placed on the clock: file name → embedded recording time → file
+creation time (only when consistent with modification time minus duration) → modification time
+minus duration; the last two are marked *estimated* (`rectime.py`, README "How the recording
+time is determined"). Within an hour, recordings are ordered by start instant, ties by natural
+file name. Version 1.0 used natural file-name order for one big batch; that is no longer
+sufficient once output is organised by clock hour.
 
-## 10. Packaging and distribution
+## 10. Chronological hour-by-hour processing (version 1.1)
+
+Goal: start with the oldest clock hour, finish it completely (audio, transcripts, combined
+transcripts, archiving) and only then continue; results become usable hour by hour and every
+finished hour is a recovery checkpoint.
+
+| Decision | Choice | Why |
+|---|---|---|
+| Unit of work | one local clock hour (`refined/<YYYY-MM-DD>/<HH-00>`) | as required; sortable, Windows-safe names |
+| Recordings crossing an hour | split *virtually* at sample positions computed from the start instant; each part processed with its hour | originals untouched; audio of different hours never mixed |
+| Hour boundaries | found by stepping through UTC quarter hours and comparing local date/hour | correct for DST changes and 30/45-minute time-zone offsets; the repeated autumn hour stays one folder |
+| Enhancement of a part | DeepFilterNet/filters get 4 s of warm-up audio from *before* the part (the previous hour) | the part sounds the same as if the whole recording had been processed |
+| Recognition of a part | decoded with up to 30 s of context before and 15 s after from the same recording; words are kept by their start time; the next hour continues after the last word kept by the previous hour | sentences crossing the hour are recognised in one piece; no word lost or duplicated (verified at 09:00 and midnight) |
+| Completion record | `_AudioRefine_hour.json` per hour (pieces with SHA-256 and sample ranges, audio checksums, transcript entries) + `_AudioRefine_words.json` | the folder existing is not proof of completion; the manifest is written last |
+| Day and master transcripts | regenerated from all hour manifests after every hour and at every start | always consistent, chronological, no duplicates; repairs an interrupted update; no speech recognition involved |
+| New recordings for a finished hour | hour rebuilt in staging: existing audio is copied bit-exactly from its FLAC files (no new dither), existing transcript entries are re-timed, only the new recording is enhanced and transcribed; swapped in with a journal | no quality loss, no re-transcription, crash-safe |
+| Archiving | to `processed/<date>/<HH-00>` of the start hour, only when all parts of the recording are in finished hours; content identity by SHA-256; never overwrite (numbered names) | requirement; a 08:45–10:15 recording is not archived after the 08:00 hour |
+| Repeated runs | recording identity by SHA-256 against the manifests: new / partially processed / processed-but-not-archived / duplicate | no duplicate audio or text; continues interrupted work |
+| Models and caches | the speech model is loaded once per run; each recording is decoded once and kept until its last hour is finished, then deleted | performance with many hours; bounded disk use |
+| Hours in parallel | no (as specified); parallelism stays inside the hour (DeepFilterNet chunks, CTranslate2 threads) | predictability, memory |
+
+Folders created by AudioRefine 1.0 (batch folders `refined/<YYYY-MM-DD_HH-MM-SS>`) are left
+untouched and are not merged into the 1.1 structure.
+
+## 11. Packaging and distribution
 
 * PyInstaller 6.22 one-folder build (`packaging/audiorefine.spec`), no UPX (fewer antivirus
   false positives), Windows version resources and icon. 156 MB ZIP, 353 MB unpacked (dominated by
@@ -207,7 +235,7 @@ used. Rationale in README "How the order is decided" and `ordering.py`.
   unrelated/damaged files, timeline formats, word error rate) → upload artifact.
 * Not code-signed (no certificate available); SmartScreen will warn on first start.
 
-## 11. Licensing review
+## 12. Licensing review
 
 All bundled components are under permissive licences (MIT, BSD, Apache-2.0, PSF) or LGPL used
 as unmodified shared libraries (Qt/PySide6, FFmpeg via PyAV, libsndfile), which permits

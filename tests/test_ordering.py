@@ -54,9 +54,12 @@ def test_filename_datetime_rejects_non_dates():
 
 
 def test_metadata_datetime():
-    assert parse_metadata_datetime("2024-03-15T14:30:22.000000Z") == datetime(2024, 3, 15, 14, 30, 22)
-    assert parse_metadata_datetime("2024-03-15T15:30:22+01:00") == datetime(2024, 3, 15, 14, 30, 22)
-    assert parse_metadata_datetime("2024-03-15 14:30:22") == datetime(2024, 3, 15, 14, 30, 22)
+    from datetime import timezone
+
+    utc = datetime(2024, 3, 15, 14, 30, 22, tzinfo=timezone.utc)
+    assert parse_metadata_datetime("2024-03-15T14:30:22.000000Z") == utc          # time zone is kept
+    assert parse_metadata_datetime("2024-03-15T15:30:22+01:00") == utc
+    assert parse_metadata_datetime("2024-03-15 14:30:22") == datetime(2024, 3, 15, 14, 30, 22)   # local, naive
     assert parse_metadata_datetime("1970-01-01T00:00:00Z") is None
     assert parse_metadata_datetime("garbage") is None
 
