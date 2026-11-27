@@ -52,7 +52,14 @@ def master_text(root: Path) -> str:
 
 
 def entry_lines(txt: str) -> list[str]:
-    return re.findall(r"^\[.*\]$|^\[.*\] \[uncertain\]$", txt, re.M)
+    """Transcript entries as 'head line + text line'. Two different short segments can start in the
+    same second (identical heads); only head *and* text together identify a duplicated entry."""
+    return re.findall(r"^\[[^\n]*\](?: \[uncertain\])?\n[^\n]*$", txt, re.M)
+
+
+def duplicates(txt: str) -> list[str]:
+    ents = entry_lines(txt)
+    return sorted({e for e in ents if ents.count(e) > 1})
 
 
 @pytest.fixture
@@ -121,7 +128,7 @@ def test_multi_day_hourly_structure_and_transcripts(multiday, model_dir):
     assert "Status: COMPLETE" in txt and "Hourly groups included: 6" in txt
     stamps = re.findall(r"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) \|", txt, re.M)
     assert stamps == sorted(stamps) and len(stamps) >= 6
-    assert len(entry_lines(txt)) == len(set(entry_lines(txt)))
+    assert not duplicates(txt), duplicates(txt)
     assert "2025-11-25 09:00:" in txt and "2025-11-26 00:00:" in txt
     # SRT relative to its own file; hour transcript references the audio file
     h9 = refined / "2025-11-25" / "09-00"
@@ -184,7 +191,7 @@ def test_cancel_during_hour_then_resume(multiday, model_dir):
     assert (refined / "2025-11-25" / "08-00" / HOUR_TRANSCRIPT).read_text(encoding="utf-8") == first_08
     assert (root / "processed" / "2025-11-25" / "08-00" / "20251125_085930.wav").exists()
     txt = master_text(root)
-    assert "Status: COMPLETE" in txt and len(entry_lines(txt)) == len(set(entry_lines(txt)))
+    assert "Status: COMPLETE" in txt and not duplicates(txt), duplicates(txt)
     assert len(re.findall(r"HOUR: ", txt)) == 6
 
 
@@ -214,7 +221,7 @@ def test_late_recordings_and_older_date(multiday, model_dir):
     heads = re.findall(r"DATE: \S+", txt)
     assert heads == ["DATE: 2025-11-24", "DATE: 2025-11-25", "DATE: 2025-11-26"]
     after = entry_lines(txt)
-    assert len(after) == len(set(after))
+    assert not duplicates(txt), duplicates(txt)
     assert set(before) <= set(after) | {l for l in before if "08:" in l}            # earlier entries are still there
     assert (root / "processed" / "2025-11-25" / "08-00" / "20251125_084500.m4a").exists()
 
@@ -326,4 +333,4 @@ def test_engine_killed_mid_hour_then_retry(multiday, model_dir):
     out = run(root, model_dir)
     assert out.status == "success", out.message
     assert out.hours_done[0] == "2025-11-25 09"
-    assert len(entry_lines(master_text(root))) == len(set(entry_lines(master_text(root))))
+    assert not duplicates(master_text(root)), duplicates(master_text(root))

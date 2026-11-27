@@ -8,14 +8,20 @@ independently. All figures were measured in this project unless a source is give
 
 **Feasible for a useful subset of sounds, with clear limits.** A compact AudioSet-trained
 classifier running locally on the CPU recognises many everyday sounds well enough to be useful
-for browsing large collections (e.g. knocking, crying, laughter, snoring, typing, frying, a
-dog, a cat, music, alarms, sirens), at roughly 30–60 × real time on an ordinary CPU. Many other
-requested sounds (shouting, whimpering, sighs, door slams, footsteps, dishes, cutlery, vacuum
-cleaner, microwave, washing machine, dishwasher, kettle …) are either not separable from
-everyday speech/noise at an acceptable false-alarm rate, or have too few reliable examples, and
-are therefore **disabled** rather than shown with misleading results (§6). Activity inference is
-limited to two conservative rules (possible cooking, possible washing up). Timing is accurate to
-about ±1 s for short sounds and ±5 s for music/TV.
+for browsing large collections – 54 categories are enabled, among them crying, laughter,
+snoring, sneezing, shouting, knocking, breaking glass, doorbell, hairdryer, vacuum cleaner,
+toilet flush, frying, blender, keyboard typing, phone ringing, alarms, music, video game music,
+dogs, cats, birds, rain, thunder and traffic sounds – at about 40 × (one CPU core) to 100 ×
+(four cores) real time. On held-out AudioSet clips the enabled categories reach a mean precision
+of 0.78 (0.92 at *High*) and a mean recall of 0.54; event-free speech and quiet rooms gave no
+detections. Recall drops strongly when sounds are quiet, distant, or masked by conversation or
+TV (§7.3). Many other requested sounds (coughing, sighing, whimpering, screaming, footsteps,
+doors and drawers, banging, dishes, microwave, kettle, running water, television, mouse clicks,
+washing machine, dishwasher …) are **disabled** because no threshold reached the precision and
+recall targets, or because the model has no such class – rather than being shown with
+misleading results (§6). Activity inference is implemented but effectively deferred: with the
+enabled categories only *Possible cooking* (frying + blender) can fire (§11). Timing is accurate
+to about ±1 s for short sounds and ±5 s for music/TV.
 
 The concept is therefore delivered as *direct sound event detection with honest confidence*,
 plus playback-based review – not as an activity or behaviour recogniser.
@@ -110,7 +116,302 @@ Recording times, DST handling and the estimated-time rules are those of the tran
 (`rectime`; for recordings already transcribed, the exact start time stored in the hour
 manifest is reused, so both outputs agree).
 
-<!-- TABLES -->
+
+## 6. Vocabulary, thresholds and which categories are enabled
+
+### 6.1 Method (``tools/sound/tune.py``)
+
+* **Candidates**: 107 categories built from the requested list (``tools/sound/categories_candidates.json``),
+  each a set of AudioSet classes (e.g. *Crying / sobbing* = "Crying, sobbing" + "Baby cry, infant
+  cry"), with a kind (impact, vocal, sustained, media) that sets merging and evidence rules.
+  Categories that would report the same sound twice were merged (baby crying into crying,
+  pouring into running water, cutlery into dishes) or left out (generic "Water", mechanical hum).
+* **Data**: the AudioSet *evaluation* split (17,141 clips downloaded; the models were trained only
+  on the training splits) – 10,003 clips: every clip with any candidate label plus 2,000 random
+  others. Each clip scored exactly as the application does (2 s windows + 10 s context, combined).
+* **Split**: 50/50 by video id. Thresholds are chosen on half A, all reported precision/recall is
+  measured on the untouched half B.
+* **Thresholds**: *moderate* = lowest threshold with precision ≥ 0.65 on A (vocal sounds ≥ 0.70,
+  because they occur inside conversation), *high* = precision ≥ 0.85 (vocal ≥ 0.88); floors 0.12 /
+  0.30; then raised until event-free material yields ≤ 0.5 moderate and ≤ 0.1 high detections per
+  hour (1.4 h of Danish/English read speech + 0.5 h of quiet room).
+* **Enabled** only with ≥ 12 test examples, precision ≥ 0.62 and recall ≥ 0.25 at the moderate
+  threshold on half B, and not excluded for a design reason.
+* Labels in AudioSet are clip-level and incomplete, so precision is underestimated for common
+  sounds (unlabelled true occurrences count as false alarms) and recall is approximate.
+
+Result: **54 of 107 candidate categories enabled**. On the test half the enabled categories have a
+mean precision of 0.78 and mean recall of 0.54 at *Moderate* (median 0.75 / 0.53), and mean
+precision 0.92 / recall 0.33 at *High*. Event-free read speech and quiet room: 0 detections per
+hour at the chosen thresholds.
+
+### Enabled categories
+
+| Group | Category | AudioSet classes | Moderate / High threshold | Precision / recall at moderate (test half) | n | False detections per hour of speech + quiet room |
+|---|---|---|---|---|---|---|
+| Human sounds | Crying / sobbing | Crying, sobbing, Baby cry, infant cry | 0.29 / 0.58 | 0.78 / 0.56 | 45 | 0.0 |
+| Human sounds | Laughter | Laughter, Baby laughter, Giggle, Snicker, Belly laugh, Chuckle, chortle | 0.16 / 0.30 | 0.75 / 0.49 | 128 | 0.0 |
+| Human sounds | Sneezing | Sneeze | 0.38 / 0.98 | 0.69 / 0.39 | 23 | 0.0 |
+| Human sounds | Snoring | Snoring | 0.17 / 0.30 | 0.90 / 0.69 | 26 | 0.0 |
+| Human sounds | Shouting | Shout, Yell, Children shouting | 0.12 / 0.30 | 0.73 / 0.38 | 66 | 0.0 |
+| Human sounds | Singing | Singing, Male singing, Female singing, Child singing, Choir | 0.13 / 0.35 | 0.70 / 0.57 | 232 | 0.0 |
+| Human sounds | Whistling | Whistling | 0.18 / 0.36 | 0.92 / 0.92 | 25 | 0.0 |
+| Human sounds | Clapping / applause | Clapping, Applause | 0.13 / 0.71 | 0.62 / 0.56 | 54 | 0.0 |
+| Impacts and movement | Knocking | Knock | 0.21 / 0.31 | 0.81 / 0.56 | 23 | 0.0 |
+| Impacts and movement | Tapping | Tap | 0.12 / 0.30 | 0.75 / 0.26 | 23 | 0.0 |
+| Impacts and movement | Breaking glass | Shatter, Breaking | 0.23 / 0.70 | 0.64 / 0.39 | 41 | 0.0 |
+| Impacts and movement | Coins dropping | Coin (dropping) | 0.23 / 0.98 | 0.67 / 0.35 | 34 | 0.0 |
+| Household | Doorbell | Doorbell, Ding-dong | 0.12 / 0.30 | 0.71 / 0.51 | 43 | 0.0 |
+| Household | Hammering | Hammer | 0.12 / 0.30 | 1.00 / 0.27 | 37 | 0.0 |
+| Household | Zipper | Zipper (clothing) | 0.38 / 0.48 | 1.00 / 0.30 | 30 | 0.0 |
+| Household | Vacuum cleaner | Vacuum cleaner | 0.12 / 0.98 | 0.83 / 0.46 | 22 | 0.0 |
+| Household | Printer | Printer | 0.12 / 0.30 | 0.73 / 0.37 | 30 | 0.0 |
+| Household | Clock ticking | Clock, Tick, Tick-tock | 0.12 / 0.30 | 0.81 / 0.33 | 75 | 0.0 |
+| Kitchen | Frying / sizzling | Frying (food), Sizzle | 0.12 / 0.30 | 0.79 / 0.54 | 43 | 0.0 |
+| Kitchen | Blender | Blender | 0.12 / 0.98 | 0.71 / 0.40 | 25 | 0.0 |
+| Kitchen | Packaging / crinkling | Crumpling, crinkling, Tearing | 0.12 / 0.30 | 0.85 / 0.33 | 52 | 0.0 |
+| Personal care and bathroom | Hairdryer | Hair dryer | 0.12 / 0.30 | 1.00 / 0.62 | 21 | 0.0 |
+| Personal care and bathroom | Toilet flushing | Toilet flush | 0.12 / 0.30 | 0.80 / 0.50 | 16 | 0.0 |
+| Entertainment and electronics | Music | Music | 0.29 / 0.74 | 0.66 / 0.93 | 1024 | 0.0 |
+| Entertainment and electronics | Radio | Radio | 0.31 / 0.45 | 0.82 / 0.33 | 27 | 0.0 |
+| Entertainment and electronics | Video game music | Video game music | 0.12 / 0.30 | 0.73 / 0.46 | 24 | 0.0 |
+| Entertainment and electronics | Keyboard typing | Typing, Computer keyboard, Typewriter | 0.12 / 0.30 | 0.81 / 0.58 | 60 | 0.0 |
+| Entertainment and electronics | Phone ringing | Telephone, Telephone bell ringing, Ringtone | 0.12 / 0.33 | 0.71 / 0.67 | 60 | 0.0 |
+| Entertainment and electronics | Beeps | Beep, bleep | 0.55 / 0.98 | 0.88 / 0.29 | 24 | 0.0 |
+| Entertainment and electronics | Alarm | Alarm, Alarm clock, Smoke detector, smoke alarm, Fire alarm, Buzzer | 0.12 / 0.30 | 0.75 / 0.50 | 106 | 0.0 |
+| Outdoor and transport | Siren | Siren, Police car (siren), Ambulance (siren), Fire engine, fire truck (siren), Civil defense siren | 0.12 / 0.30 | 0.94 / 0.76 | 84 | 0.0 |
+| Outdoor and transport | Car | Car, Car passing by, Motor vehicle (road) | 0.20 / 0.34 | 0.63 / 0.56 | 164 | 0.0 |
+| Outdoor and transport | Car horn | Vehicle horn, car horn, honking | 0.55 / 0.98 | 0.67 / 0.38 | 21 | 0.0 |
+| Outdoor and transport | Engine | Engine, Idling, Accelerating, revving, vroom | 0.21 / 0.33 | 0.65 / 0.32 | 159 | 0.0 |
+| Outdoor and transport | Train | Train, Train whistle, Train horn, Railroad car, train wagon | 0.12 / 0.30 | 0.93 / 0.57 | 98 | 0.0 |
+| Outdoor and transport | Aircraft | Aircraft, Aircraft engine, Fixed-wing aircraft, airplane, Jet engine | 0.12 / 0.30 | 0.85 / 0.73 | 85 | 0.0 |
+| Outdoor and transport | Helicopter | Helicopter | 0.12 / 0.30 | 0.73 / 0.42 | 26 | 0.0 |
+| Outdoor and transport | Rain | Rain, Raindrop, Rain on surface | 0.12 / 0.30 | 0.73 / 0.58 | 38 | 0.0 |
+| Outdoor and transport | Wind | Wind, Wind noise (microphone) | 0.12 / 0.30 | 0.67 / 0.35 | 88 | 0.0 |
+| Outdoor and transport | Thunder | Thunder, Thunderstorm | 0.12 / 0.30 | 0.75 / 0.65 | 23 | 0.0 |
+| Outdoor and transport | Lawn mower | Lawn mower | 0.12 / 0.30 | 0.67 / 0.37 | 27 | 0.0 |
+| Outdoor and transport | Chainsaw | Chainsaw | 0.41 / 0.98 | 0.88 / 0.48 | 31 | 0.0 |
+| Outdoor and transport | Church bells | Church bell | 0.13 / 0.37 | 0.63 / 0.70 | 27 | 0.0 |
+| Outdoor and transport | Fireworks | Fireworks, Firecracker | 0.12 / 0.30 | 0.88 / 0.69 | 32 | 0.0 |
+| Animals | Dog barking | Bark, Yip, Bow-wow, Dog | 0.23 / 0.70 | 0.71 / 0.74 | 122 | 0.0 |
+| Animals | Howling | Howl | 0.14 / 0.74 | 0.65 / 0.77 | 22 | 0.0 |
+| Animals | Cat meowing | Meow, Cat, Caterwaul | 0.28 / 0.43 | 0.78 / 0.74 | 58 | 0.0 |
+| Animals | Cat purring | Purr | 0.12 / 0.30 | 0.83 / 0.80 | 25 | 0.0 |
+| Animals | Birds | Bird, Bird vocalization, bird call, bird song, Chirp, tweet, Squawk, Crow, Caw, Pigeon, dove | 0.20 / 0.63 | 0.69 / 0.53 | 133 | 0.0 |
+| Animals | Rooster / chickens | Chicken, rooster, Crowing, cock-a-doodle-doo | 0.18 / 0.30 | 0.66 / 0.94 | 31 | 0.0 |
+| Animals | Insects | Insect, Cricket, Mosquito, Fly, housefly | 0.12 / 0.30 | 0.92 / 0.49 | 71 | 0.0 |
+| Animals | Frogs | Frog | 0.12 / 0.30 | 0.81 / 0.92 | 24 | 0.0 |
+| Animals | Horse | Horse | 0.20 / 0.49 | 0.77 / 0.63 | 43 | 0.0 |
+| Animals | Cattle | Cattle, bovinae | 0.12 / 0.30 | 0.91 / 0.75 | 28 | 0.0 |
+
+### Investigated but disabled
+
+| Group | Category | Reason (test half) |
+|---|---|---|
+| Human sounds | Baby crying | included in 'Crying / sobbing' (one sound must not be reported twice); recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 27) |
+| Human sounds | Whimpering | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 33) |
+| Human sounds | Sighing | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 21) |
+| Human sounds | Coughing | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 23) |
+| Human sounds | Screaming | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 22) |
+| Human sounds | Whispering | precision 0.60 < 0.62 (P 0.60, R 0.90, n 29) |
+| Human sounds | Humming (voice) | precision 0.43 < 0.62; recall 0.19 < 0.25 (P 0.43, R 0.19, n 16) |
+| Human sounds | Groaning | recall 0.11 < 0.25 (P 1.00, R 0.11, n 46) |
+| Human sounds | Heavy breathing | recall 0.25 < 0.25 (P 0.87, R 0.25, n 109) |
+| Human sounds | Throat clearing | precision 0.55 < 0.62 (P 0.55, R 0.27, n 22) |
+| Human sounds | Sniffing | recall 0.00 < 0.25 (P 1.00, R 0.00, n 29) |
+| Human sounds | Baby babbling | precision 0.57 < 0.62 (P 0.57, R 0.32, n 25) |
+| Human sounds | Children playing | precision 0.62 < 0.62 (P 0.61, R 0.42, n 19) |
+| Human sounds | Chewing / eating | precision 0.62 < 0.62 (P 0.62, R 0.59, n 22) |
+| Impacts and movement | Footsteps | precision 0.58 < 0.62 (P 0.58, R 0.33, n 21) |
+| Impacts and movement | Running (footsteps) | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 20) |
+| Impacts and movement | Banging / impact | recall 0.19 < 0.25 (P 0.72, R 0.19, n 93) |
+| Impacts and movement | Door slamming | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 23) |
+| Impacts and movement | Crash / smash | precision 0.61 < 0.62 (P 0.61, R 0.38, n 29) |
+| Impacts and movement | Scraping | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 26) |
+| Impacts and movement | Clattering | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 30) |
+| Impacts and movement | Squeaking / creaking | recall 0.23 < 0.25 (P 0.85, R 0.23, n 47) |
+| Impacts and movement | Keys jangling | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 32) |
+| Household | Door opening / closing | precision 0.50 < 0.62; recall 0.05 < 0.25 (P 0.50, R 0.05, n 38) |
+| Household | Cupboard / drawer | recall 0.18 < 0.25 (P 1.00, R 0.17, n 57) |
+| Household | Scissors | recall 0.19 < 0.25 (P 0.80, R 0.19, n 21) |
+| Household | Fan / air conditioning | recall 0.04 < 0.25 (P 1.00, R 0.04, n 53) |
+| Household | Mechanical / electrical hum | constant background hum of fridges, mains and fans – would mark almost every hour; precision 0.50 < 0.62; recall 0.20 < 0.25 (P 0.50, R 0.20, n 45) |
+| Household | Sewing machine | recall 0.16 < 0.25 (P 1.00, R 0.16, n 32) |
+| Household | Power tool / drill | precision 0.57 < 0.62 (P 0.57, R 0.29, n 41) |
+| Household | Sawing | recall 0.22 < 0.25 (P 0.86, R 0.22, n 27) |
+| Kitchen | Glass clinking | precision 0.57 < 0.62; recall 0.08 < 0.25 (P 0.57, R 0.08, n 50) |
+| Kitchen | Pouring / filling | included in 'Running or pouring water'; recall 0.12 < 0.25 (P 0.64, R 0.12, n 57) |
+| Kitchen | Chopping (food) | recall 0.19 < 0.25 (P 1.00, R 0.19, n 21) |
+| Kitchen | Dishes / cutlery | precision 0.57 < 0.62; recall 0.13 < 0.25 (P 0.57, R 0.13, n 30) |
+| Kitchen | Cutlery | included in 'Dishes / cutlery' (P 0.75, R 0.25, n 24) |
+| Kitchen | Microwave oven | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 31) |
+| Kitchen | Boiling | recall 0.19 < 0.25 (P 0.71, R 0.18, n 27) |
+| Personal care and bathroom | Electric shaver | precision 0.50 < 0.62 (P 0.50, R 0.63, n 19) |
+| Personal care and bathroom | Toothbrush | recall 0.15 < 0.25 (P 0.64, R 0.15, n 48) |
+| Personal care and bathroom | Running or pouring water | precision 0.61 < 0.62 (P 0.60, R 0.46, n 101) |
+| Personal care and bathroom | Water splashing | precision 0.60 < 0.62 (P 0.60, R 0.27, n 22) |
+| Personal care and bathroom | Dripping | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 36) |
+| Personal care and bathroom | Water (general) | too generic (any water sound) to be useful; precision 0.51 < 0.62 (P 0.51, R 0.68, n 110) |
+| Entertainment and electronics | Television | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 32) |
+| Entertainment and electronics | Electronic sound effects | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 16) |
+| Entertainment and electronics | Clicking | recall 0.05 < 0.25 (P 1.00, R 0.05, n 19) |
+| Entertainment and electronics | Chime / ding | precision 0.51 < 0.62 (P 0.51, R 0.46, n 44) |
+| Outdoor and transport | Motorcycle | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 26) |
+| Outdoor and transport | Traffic | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 24) |
+| Animals | Dog growling | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 31) |
+| Animals | Dog whining / whimpering | recall 0.00 < 0.25; no usable threshold (P 1.00, R 0.00, n 22) |
+| Speech | Speech | speech is covered by the transcription; recall 0.10 < 0.25 (P 0.90, R 0.10, n 1486) |
+
+
+Notable gaps among the requested sounds: coughing, sighing, whimpering, screaming, heavy
+breathing, footsteps, door slams/doors/drawers, banging, dishes, cutlery, microwave, kettle,
+electric toothbrush, running water (precision 0.61 – just below the bar), splashing, fans and
+mechanical hum, television audio, mouse clicks and electronic sound effects are **disabled**.
+Washing machine, tumble dryer, dishwasher, kettle, yawning, shower and furniture movement have
+no AudioSet class and could not be considered. Video game audio is available only as *Video
+game music*.
+
+## 7. Test results
+
+### 7.1 Model comparison (AudioSet evaluation clips, 10-second clips)
+
+<!-- CMP -->
+
+### 7.2 Held-out AudioSet evaluation clips (the application's two-scale scoring)
+
+See the tables in §6 (precision/recall on test half B per category).
+
+### 7.3 Difficult conditions (ESC-50 – Freesound recordings, independent of AudioSet)
+
+ESC-50 clips (test folds 4–5, 32 categories mapped to enabled categories) were mixed into
+10-second backgrounds at levels relative to the background (``tools/sound/make_mixtures.py``):
+read speech (conversation-like), a TV-like bed (music + speech from AudioSet clips labelled
+television/music, through a 180 Hz – 7 kHz "small loudspeaker" filter) and a quiet room;
+"distant" = synthetic reverberation (RT60 0.7 s, weak direct sound) and −10 dB. Detection =
+the event's category reported at moderate confidence anywhere in the clip.
+
+| Condition | Detected (enabled categories) |
+|---|---|
+| none clean | 423/544 = 78% |
+| quiet -20dB | 255/544 = 47% |
+| quiet distant | 173/544 = 32% |
+| speech 0dB | 301/544 = 55% |
+| speech -10dB | 219/544 = 40% |
+| speech -20dB | 146/544 = 27% |
+| speech distant | 122/544 = 22% |
+| tv 0dB | 158/544 = 29% |
+| tv -10dB | 66/544 = 12% |
+
+| Category | none clean | quiet -20dB | quiet distant | speech 0dB | speech -10dB | speech -20dB | speech distant | tv 0dB | tv -10dB |
+|---|---|---|---|---|---|---|---|---|---|
+| aircraft | 6/16 | 0/16 | 0/16 | 3/16 | 2/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+| alarm | 15/16 | 6/16 | 7/16 | 11/16 | 9/16 | 6/16 | 6/16 | 7/16 | 3/16 |
+| bird | 29/32 | 29/32 | 25/32 | 28/32 | 26/32 | 22/32 | 22/32 | 22/32 | 13/32 |
+| cat | 16/16 | 16/16 | 16/16 | 15/16 | 14/16 | 14/16 | 14/16 | 7/16 | 6/16 |
+| cattle | 16/16 | 13/16 | 11/16 | 14/16 | 14/16 | 14/16 | 13/16 | 7/16 | 3/16 |
+| chainsaw | 5/16 | 1/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 1/16 | 0/16 |
+| church_bell | 15/16 | 8/16 | 10/16 | 10/16 | 6/16 | 1/16 | 8/16 | 3/16 | 1/16 |
+| clapping | 16/16 | 8/16 | 0/16 | 14/16 | 10/16 | 4/16 | 0/16 | 9/16 | 4/16 |
+| clock | 13/16 | 16/16 | 1/16 | 3/16 | 3/16 | 3/16 | 0/16 | 2/16 | 2/16 |
+| crying | 16/16 | 7/16 | 0/16 | 9/16 | 4/16 | 2/16 | 1/16 | 6/16 | 0/16 |
+| dog | 16/16 | 12/16 | 14/16 | 16/16 | 11/16 | 7/16 | 10/16 | 12/16 | 1/16 |
+| engine | 10/16 | 0/16 | 0/16 | 2/16 | 2/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+| fireworks | 15/16 | 0/16 | 0/16 | 12/16 | 9/16 | 0/16 | 0/16 | 8/16 | 2/16 |
+| frog | 16/16 | 12/16 | 8/16 | 12/16 | 9/16 | 6/16 | 4/16 | 8/16 | 4/16 |
+| glass_break | 14/16 | 1/16 | 0/16 | 7/16 | 6/16 | 1/16 | 0/16 | 6/16 | 3/16 |
+| helicopter | 6/16 | 0/16 | 0/16 | 4/16 | 0/16 | 0/16 | 0/16 | 1/16 | 0/16 |
+| horn | 15/16 | 5/16 | 7/16 | 4/16 | 1/16 | 1/16 | 1/16 | 1/16 | 0/16 |
+| insect | 21/32 | 21/32 | 8/32 | 20/32 | 15/32 | 13/32 | 5/32 | 3/32 | 2/32 |
+| knock | 15/16 | 16/16 | 11/16 | 11/16 | 5/16 | 3/16 | 1/16 | 2/16 | 1/16 |
+| laughter | 13/16 | 1/16 | 1/16 | 8/16 | 4/16 | 1/16 | 0/16 | 5/16 | 1/16 |
+| rain | 12/16 | 2/16 | 0/16 | 8/16 | 4/16 | 0/16 | 0/16 | 2/16 | 0/16 |
+| rooster | 31/32 | 31/32 | 23/32 | 30/32 | 28/32 | 25/32 | 25/32 | 24/32 | 11/32 |
+| siren | 14/16 | 12/16 | 13/16 | 13/16 | 10/16 | 6/16 | 8/16 | 5/16 | 4/16 |
+| sneeze | 9/16 | 3/16 | 3/16 | 5/16 | 2/16 | 0/16 | 1/16 | 1/16 | 0/16 |
+| snoring | 16/16 | 12/16 | 10/16 | 12/16 | 7/16 | 3/16 | 3/16 | 5/16 | 1/16 |
+| thunder | 10/16 | 0/16 | 0/16 | 5/16 | 1/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+| toilet | 15/16 | 9/16 | 4/16 | 9/16 | 2/16 | 0/16 | 0/16 | 3/16 | 3/16 |
+| train | 12/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+| typing | 16/16 | 14/16 | 0/16 | 14/16 | 15/16 | 14/16 | 0/16 | 8/16 | 1/16 |
+| vacuum | 0/16 | 0/16 | 1/16 | 2/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+| wind | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 | 0/16 |
+
+Background only (10 s clips):
+  speech: 0 false detections in 60 clips (0.17 h) – {}
+  tv: 3 false detections in 60 clips (0.17 h) – {'laughter': 1, 'doorbell': 1, 'horse': 1}
+
+
+Reading: clean, isolated recordings from another collection are recognised 78 % of the time;
+masking by conversation, distance and especially TV audio reduces recall a lot (to 12–55 %).
+False detections on the backgrounds themselves stayed rare (0 on speech; 3 on TV, all
+plausible TV content). Some enabled categories transfer poorly to ESC-50 recordings (vacuum
+cleaner 0/16, wind 0/16, train/aircraft/engine low) – their recall outside AudioSet is low, while
+their detections, when they occur, are mostly right.
+
+### 7.4 Background material (false detections per hour, final thresholds)
+
+| Material | Duration | Detections per hour |
+|---|---|---|
+| Read speech, Danish + English (FLEURS dev, with pauses and room noise) | 1.4 h | 0 |
+| Quiet room (noise + faint mains hum) | 0.5 h | 0 |
+| Meeting recordings (AMI, single distant microphone, real meetings) | 2.4 h | 48: laughter 47, clapping 0.9, cat purring 0.4 – laughter is very frequent in these meetings, so most are probably real; the purring is false |
+| Speech with music / hum / distance degradations | 0.4 h | 10: music 7.5 (correct – the material contains music), insects 2.5 (false) |
+
+### 7.5 Real recordings from Wikimedia Commons (CC0 / public domain, isolated sounds)
+
+| Recording (Wikimedia Commons, CC0/PD) | Detected (confidence) |
+|---|---|
+| alarm | Alarm (high) |
+| applause | Clapping / applause (moderate) |
+| baby_cry | Crying / sobbing (moderate) |
+| birds | Birds (high), Birds (moderate) |
+| cat | Cat meowing (high) |
+| clock | Clock ticking (moderate) |
+| doorbell | Doorbell (moderate) |
+| frying | Frying / sizzling (high) |
+| knock | Knocking (high) |
+| knock2 | Knocking (high) |
+| laughter | Laughter (high) |
+| microwave | Alarm (moderate) |
+| pouring | – |
+| rain_thunder | Rain (moderate), Thunder (moderate) |
+| scream | Shouting (moderate) |
+| siren | Whistling (moderate) |
+| sneeze | Sneezing (moderate) |
+| snoring | Snoring (high) |
+| typing | Keyboard typing (high) |
+| videogame | Music (moderate) |
+
+
+16 of 20 recordings are labelled correctly (scream → *Shouting* is a reasonable broader label);
+the microwave's beeps are reported as *Alarm* (microwave is disabled), a toy siren as
+*Whistling*, chiptune game music only as *Music*; pouring water is not detected (category
+disabled).
+
+### 7.6 End-to-end scene with known times (CI, ``tools/ci/make_sound_folder.py``)
+
+Six recordings over three days (incl. one crossing 09:00, one already archived in `processed`,
+one without a recording time) with real CC0/PD sounds at −24 dBFS in room noise and speech:
+10 of the 11 expected sounds of enabled categories were found, each within ±1 s of the true
+start (the missed one is a 1.3-second laugh); the knock at 09:00:20 in the recording that
+started at 08:59:45 appears once, in the 09:00 hour; the recording without a time is marked ≈;
+originals unchanged; a second run finds nothing new. The same check runs on Windows in CI (§8).
+
+## 8. Performance
+
+| Measure | Value |
+|---|---|
+| Analysis speed, 1 hour of audio (M4A), 4 threads, Intel Xeon 2.1 GHz (cloud VM) | 35 s (≈ 100 × real time) |
+| Same, 1 thread | 89 s (≈ 40 × real time) |
+| Peak memory (whole process) | ≈ 460 MB |
+| Model inferences per hour of audio | 3,600 localisation + 720 context windows |
+| Added to the portable ZIP | ≈ 20 MB (model 19.5 MB, labels, vocabulary) + PortAudio ≈ 0.3 MB |
+| Results on disk | < 0.1 MB per analysed hour |
+| GPU | not used (not needed at this speed) |
+
+A collection of 500 hours of recordings takes roughly 5 hours on a 4-core desktop CPU –
+far less than its transcription. Decoding of compressed formats is included in these times.
+
 
 ## 9. Confidence handling
 
@@ -149,7 +450,11 @@ manifest is reused, so both outputs agree).
 
 ## 11. Activity inference
 
-Implemented as two conservative rules (``sound/activities.py``); everything else was deferred.
+Implemented as two conservative rules (``sound/activities.py``). **In practice deferred**: most
+supporting categories (chopping, dishes, microwave, boiling, running water) did not pass the
+evaluation and are disabled, so with the shipped vocabulary only *Possible cooking* from frying
++ blender can fire, and *Possible washing up* cannot. The rules switch on automatically if those
+categories are enabled after real-world validation.
 
 | Suggestion | Rule | Why only this |
 |---|---|---|

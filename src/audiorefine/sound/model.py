@@ -46,7 +46,7 @@ CTX_FRAMES = int(round(CTX_S * FPS))
 CTX_HOP_FRAMES = int(round(CTX_HOP_S * FPS))
 WIN_FRAMES = int(round(WIN_S * FPS))
 HOP_FRAMES = int(round(HOP_S * FPS))
-BATCH = 32
+BATCH = 8
 SILENT_MEL = float((np.log(1e-5) + 4.5) / 5.0)   # log-mel value of digital silence
 
 MODEL_ID = "efficientat-mn10_as-onnx"

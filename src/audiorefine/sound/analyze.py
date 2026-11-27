@@ -24,7 +24,7 @@ from .vocab import Vocabulary
 log = logging.getLogger("audiorefine.sound")
 
 BLOCK_S = 20.0
-MODEL_BATCH = 256
+MODEL_BATCH = 64
 
 
 class AudioReadError(Exception):
