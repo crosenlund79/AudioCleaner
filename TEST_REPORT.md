@@ -117,7 +117,7 @@ Results of run #7 (commit `316d031`, version 1.1.0; all checks passed):
 | Hour boundary 09:00 | the 2:30 recording is split at exactly 09:00:00 (08-00 gets its first 1:34, 09-00 `Audio_001` is 2 688 000 samples = 0:56); the sentence crossing 09:00 appears once, split as "… til en metafor …" / "… for eksotiske fjerne egne." |
 | 10-minute segmentation | 10-00: `Audio_001` = 28 800 000 samples (10:00.000), `Audio_002` = the remaining 2:00 |
 | Day transcripts | present for both dates |
-| Archive | each original in `processed/<date>/<HH-00>` of its **start** hour (the 08:58 recording in 08-00, after 09-00 was finished), SHA-256 identical; `broken.wma` and `notes.txt` untouched |
+| Archive | each original in `processed/<date>/<HH-00>` of its **start** hour (the 08:58 recording in 08-00; that it is moved only after 09-00 is finished is checked by the cancel and kill tests), SHA-256 identical; `broken.wma` and `notes.txt` untouched |
 | Master transcript | `Status: COMPLETE`; dates and hours in order 25/08, 25/09, 25/10, 26/07, 26/14; no duplicated entry; all entries chronological; the estimated recording marked `≈2025-11-26 14:32:18` |
 | WER Danish 08:04 (AAC) | **7.4 %** |
 | WER English 08:30 (incl. the −65 dBFS utterance) | **2.1 %** |
