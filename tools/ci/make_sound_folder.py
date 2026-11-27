@@ -5,7 +5,7 @@ mixed into room noise and Danish speech at known clock times). Writes <folder>.e
   20251127_085945.m4a    08:59:45–09:01:45  laughter 08:59:52 (hour 08); knocking 09:00:20 (hour 09)
   20251127_171000.mp3    17:10–17:14  frying 17:10:30; microwave 17:12:00 (-> possible cooking)
   20251128_031500.wav    03:15–03:18 (next day)  snoring 03:15:30; cat 03:16:30
-  processed/2025-11-26/20-00/20251126_201500.ogg  (already archived)  doorbell 20:15:10; baby crying 20:15:40
+  processed/2025-11-26/20-00/20251126_201500.flac  (already archived)  doorbell 20:15:10; baby crying 20:15:40
   Optagelse uden tid.flac  no recording time; file date 2025-11-28 06:30:40 -> estimated (≈); sneeze
   broken.wma, notes.txt  (damaged / unrelated, must stay untouched)
 """
@@ -29,8 +29,18 @@ rng = np.random.default_rng(21)
 
 
 def load(name):
-    x, sr = sf.read(SND / f"{name}.ogg", dtype="float32")
-    return x if sr == SR else upsample(x, sr)
+    """Decode a test clip with PyAV (the application's decoder) to 32 kHz mono float32."""
+    import av
+
+    parts = []
+    with av.open(str(SND / f"{name}.ogg")) as c:
+        res = av.AudioResampler(format="flt", layout="mono", rate=SR)
+        for fr in c.decode(c.streams.audio[0]):
+            for o in res.resample(fr):
+                parts.append(o.to_ndarray().reshape(-1))
+        for o in res.resample(None):
+            parts.append(o.to_ndarray().reshape(-1))
+    return np.concatenate(parts).astype(np.float32)
 
 
 def upsample(x, sr):
@@ -72,6 +82,7 @@ def main():
     put(a, load("alarm"), 180)
     put(a, load("typing"), 240)
     write_audio(out / "20251127_074000.flac", a, SR)
+    print("written 20251127_074000.flac", flush=True)
     ev("knock", "07:41:40", "20251127_074000.flac", "2025-11-27")
     ev("alarm", "07:43:00", "20251127_074000.flac", "2025-11-27")
     ev("typing", "07:44:00", "20251127_074000.flac", "2025-11-27")
@@ -102,9 +113,9 @@ def main():
     e = room(60)
     put(e, load("doorbell"), 10)
     put(e, load("baby_cry"), 40)
-    write_audio(arch / "20251126_201500.ogg", e, SR)
-    ev("doorbell", "20:15:10", "20251126_201500.ogg", "2025-11-26")
-    ev("crying", "20:15:40", "20251126_201500.ogg", "2025-11-26")
+    write_audio(arch / "20251126_201500.flac", e, SR)
+    ev("doorbell", "20:15:10", "20251126_201500.flac", "2025-11-26")
+    ev("crying", "20:15:40", "20251126_201500.flac", "2025-11-26")
 
     f = room(20)
     put(f, load("sneeze"), 5)
@@ -125,4 +136,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import traceback
+
+    try:
+        main()
+    except BaseException:
+        traceback.print_exc(file=sys.stdout)
+        sys.stdout.flush()
+        raise

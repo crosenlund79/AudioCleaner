@@ -1,4 +1,4 @@
-# AudioRefine – Test report (versions 1.0 and 1.1)
+# AudioRefine – Test report (versions 1.0, 1.1 and 1.2)
 
 Status legend: **Verified** = executed and passed, with evidence below. **Partly verified** =
 covered by automated or indirect checks only. **Unverified** = not executed (reason given).
@@ -13,7 +13,7 @@ Test environments:
 
 | Area | Status | Evidence |
 |---|---|---|
-| Automated test suite (120 tests) on Linux | Verified | §2 |
+| Automated test suite (136 tests) on Linux | Verified | §2 |
 | Same suite on Windows (GitHub Actions) | Verified – run #7: 119 passed, 1 skipped (the DST test needs `time.tzset`, which Windows lacks); re-run on every push | §2 |
 | Portable Windows build (PyInstaller) builds; packaged self-test | Verified | §3 |
 | Packaged desktop window starts on Windows and lists a folder | Verified (automated screenshot, native Windows platform) | §3 |
@@ -55,9 +55,34 @@ Test environments:
 | Windows end-to-end of the packaged application in the hourly layout | Verified – run #7, all 50 checks passed | §3 |
 | Very large collections (hundreds of hours) | Partly verified – design (manifest-based regeneration, per-recording caches) and the 2-hour test; not run at that scale | §5 |
 
+## 1b. Version 1.2 – sound analysis (Analyze sounds, Sound Explorer)
+
+Detailed measurements: ACOUSTIC_ANALYSIS.md §6–§8.
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Feasibility evaluation with public/licensed material (AudioSet eval, ESC-50 mixtures, CC0/PD recordings, speech/meeting/quiet backgrounds) | Verified (bounded) | ACOUSTIC_ANALYSIS §6–§7 |
+| Model runs locally and offline, bundled (no download), ONNX output equal to PyTorch | Verified (max. diff. 7·10⁻⁷; front-end 4·10⁻⁵) | ACOUSTIC_ANALYSIS §3, `test_streaming_mel_equals_whole_signal` |
+| Analysis runs independently of transcription, on originals in the folder **and** in `processed/` | Verified | `test_analyze_folder_hours_boundaries_and_safety`, CI (both folders) |
+| Original recordings never moved/changed; transcripts and enhanced audio untouched | Verified (SHA-256 of every file before/after) | same test, CI verifier |
+| Chronological hour-by-hour, results of finished hours available during the run | Verified | same test (order of `hour_done` events), CI |
+| Recording crossing an hour boundary: event listed once, in the hour it starts in, with true clock time | Verified (beeps at 09:00:05 in a recording starting 08:59:30; knock at 09:00:20 in CI) | tests, CI |
+| Events are intervals (merging, hysteresis, evidence, confidence), media flag, repetition rule | Verified | `test_events_*`, `test_very_frequent_*` |
+| Timestamps of detected events | Verified: CC0/PD sounds at known times found within ±1 s (10 of 11 enabled) | `tools/ci/verify_sound_e2e.py` |
+| Repeated run finds nothing new; moved original still found; new recording redoes only its hour; event ids stable | Verified | `test_repeat_run_moved_original_and_new_recording`, CI |
+| Model/vocabulary change re-analyses instead of mixing; review marks survive | Verified | `test_reviews_hide_incorrect_and_survive_reanalysis` |
+| Interrupted analysis resumes; report status INTERRUPTED → COMPLETE | Verified | `test_cancel_after_first_hour_then_resume` |
+| No analysis while the folder is being transcribed (and vice versa) | Verified | `test_refuses_while_folder_is_being_transcribed`, pipeline check |
+| Reports (hour/day/master TXT + JSON), annotated transcript without changing transcript text | Verified | `test_annotated_transcript_*`, CI (transcribed folder: every transcript entry found unchanged) |
+| Playback starts at the right position in the original | Verified (WAV/FLAC/M4A/MP3/Ogg/Opus within 0.02 ms of a full decode) | `test_player_starts_at_the_requested_position` |
+| Sound Explorer opens, lists, filters, selects, prepares playback (packaged, Windows) | see §3 | CI screenshot |
+| Audible playback on a real Windows PC with speakers | **Unverified** – the build machine has no audio device; the player reports this inline | – |
+| Real-world accuracy on the owner's recordings | **Unverified** – requires the owner's acceptance test | ACOUSTIC_ANALYSIS §15 |
+| Activity inference | Implemented, but effectively deferred (most supporting categories disabled) | ACOUSTIC_ANALYSIS §11 |
+
 ## 2. Automated tests
 
-`python -m pytest` (`tests/`), 120 tests. Pipeline tests use the real pipeline with the small
+`python -m pytest` (`tests/`), 136 tests. Pipeline tests use the real pipeline with the small
 `faster-whisper-tiny` model on real FLEURS speech; everything else runs without a model.
 
 | File | Tests | What is covered |
@@ -69,11 +94,12 @@ Test environments:
 | `test_batch_safety.py` | 12 | batch name collisions (`_2`, `_3`); staging + atomic commit; never overwrite; stale-staging cleanup only with marker; archive with SHA-256 verification; existing file in `processed` not overwritten; **partial archival failure (file locked) and recovery on the next run**; original changed after processing is not moved; crash between move and journal; folder lock; stale lock; stale work folders; scan cleans up after a killed run |
 | `test_enhance_asr_logic.py` | 25 | arfilter keeps exact length (0, 1, 479–481, …) and adds no delay; parallel chunks ≈ single pass (< −26 dB); leveller: −1 dBFS ceiling, door slam limited, quiet speech raised, nothing gated; 20 dB speaker difference equalised to < 6 dB; hum detection 50/60 Hz; bounded plan; VAD regions/padding; **VAD detects a −65 dBFS utterance** and **does not turn 2 minutes of room noise into speech**; subtitle-credit artefacts; repeated low-confidence segments; clip/block planning; per-clip gain; hallucination phrases; repetition loops; duplicated-sentence detection; uncertainty flags; language policy (Norwegian/Swedish → Danish, hysteresis, other languages) |
 | `test_pipeline.py` | 11 | version 1.1 end-to-end (real speech, whisper-tiny): multi-day folder with several recordings per hour, a missing hour, a recording across 09:00 and one across midnight → exact folder structure, chronological processing, archive layout and checksums, sample conservation per recording, chronological master without duplicates, clock times, relative SRT; 10-minute segmentation inside an hour; cancel during an hour and resume; recordings added to a finished hour and to an older date (bit-exact reuse); repeat runs and duplicate copies; repair of combined transcripts and pending archiving; estimated recording time; failure injection; disk space; Danish characters; engine killed mid-hour then retry |
+| `test_sound.py` | 16 | sound analysis: streaming front-end = whole-signal front-end; event building (hysteresis, merging, evidence, confidence, media flag, repetition rule); activity rules; playback position in 4 formats; whole-folder runs (hours, boundary, archived originals, untouched files, reports, playback target), repeat/move/add, reviews and re-analysis on vocabulary change, cancel/resume, lock, annotated transcript; shipped vocabulary consistency |
 | `test_hours.py` | 7 | recording-time priority, file-system fallbacks, implausible metadata; exact hour splitting incl. midnight; DST transitions; recovery of interrupted hour replacements; archive never overwrites |
 
 Results:
 
-* Linux: 120 passed (≈ 10 minutes; the 2-hour stress test of §5 is run separately).
+* Linux: 136 passed (≈ 10 minutes; the 2-hour stress test of §5 is run separately).
 * Windows (GitHub Actions run #7, commit `316d031`): 119 passed, 1 skipped (`test_daylight_saving_transitions`
   switches the process time zone with `time.tzset`, which does not exist on Windows), 0 failed.
 

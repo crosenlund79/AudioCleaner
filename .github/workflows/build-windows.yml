@@ -149,7 +149,9 @@ jobs:
         run: python tools/ci/verify_e2e.py "$env:RUNNER_TEMP\Audio dumps"
 
       - name: Prepare sound-analysis test folder (CC0 / public-domain sounds)
-        run: python tools/ci/make_sound_folder.py "$env:RUNNER_TEMP\Sound dumps"
+        run: |
+          python -X faulthandler tools/ci/make_sound_folder.py "$env:RUNNER_TEMP\Sound dumps"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Packaged sound analysis (Analyze sounds) of both folders
         run: |
