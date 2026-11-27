@@ -181,11 +181,20 @@ Results of run #13 (commit `8170f48`, version 1.2.0; all steps passed):
 | Sound folder: hours | exactly the 7 hours that contain audio (2025-11-26 20; 2025-11-27 07, 08, 09, 17; 2025-11-28 03, 06), in chronological order; the estimated recording marked ≈ |
 | Sound folder: detections | 10 of the 11 placed sounds of enabled categories found within ±1 s of the placed time (knocking ×2 incl. the one at 09:00:20 in hour 09, alarm, typing, frying, snoring, cat, doorbell, crying, sneeze); **missed:** the 1.3-second laughter clip. Microwave is a disabled category and was correctly not reported. No other detections. |
 | Originals | every file in the sound folder and in `processed/` byte-identical (SHA-256) after analysis; `broken.wma` reported as unreadable and left untouched |
-| Transcribed folder | the same 5 hours analysed from the archived originals in `processed/`; 0 sound events (speech and room noise only – correct); `Transcript_Master_Annotated.txt` written and every one of the 39 transcript entries found unchanged in it; `Transcript_Master_Complete.txt` untouched |
+| Transcribed folder | the same 5 hours analysed from the archived originals in `processed/`; 0 sound events (speech and room noise only – correct); `Transcript_Master_Annotated.txt` written and every one of the 39 transcript entries found unchanged in it |
 | Repeated analysis | finds nothing new (run #13 printed it; asserted from run #14 on) |
 | Analysis speed (packaged, 4 vCPU runner) | 16 min 20 s of audio (6 recordings) in 10 s; 17 min 23 s in 11 s (≈ 95–100 × real time, including decoding and model loading) |
 | Sound Explorer (packaged, native Windows) | opens with 10 events in 9 categories, 24-hour timeline over 3 dates, first event selected; playback correctly reports "No audio output device could be opened" inline (the runner has no sound card); exit code 0 |
 | Portable ZIP | `AudioRefine-1.2.0-win-x64`, 175.9 MB (contains the 19.5 MB sound model; no download needed for sound analysis) |
+
+Run #14 (commit `c0c894f`; all steps passed) repeats these results (test suite, transcription
+end-to-end, 10 of 11 sounds at the same times, no other detections, Sound Explorer exit code 0)
+and adds two assertions: the repeated analysis reports "Nothing new to analyse", and **all 46
+files of the transcribed folder outside `analysis/`** (archived originals in `processed/`,
+enhanced audio, hour/day/master transcripts) are byte-identical (SHA-256) before and after the
+sound analysis. (The number of transcript entries differs between runs – 35 in run #14 –
+because Whisper's segmentation varies slightly between runner CPUs; the check covers all of
+them.)
 
 Version 1.0 results (run #6, commit `c88f917`, one continuous batch): 112/112 tests on Windows;
 WER Danish 7.4 %, English 2.1 %, Danish across the 10:00 boundary 9.8 %; 10 minutes of room
